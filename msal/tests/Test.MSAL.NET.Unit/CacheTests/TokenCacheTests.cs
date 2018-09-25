@@ -131,7 +131,7 @@ namespace Test.MSAL.NET.Unit.CacheTests
             atItem.Secret = atKey;
 
             cache.tokenCacheAccessor.AccessTokenCacheDictionary[atKey] = JsonHelper.SerializeToJson(atItem);
-            MsalAccessTokenCacheItem item = _cache.FindAccessTokenAsync(_authorityFactory, _aadInstanceDiscovery, new AuthenticationRequestParameters()
+            MsalAccessTokenCacheItem item = cache.FindAccessTokenAsync(_authorityFactory, _aadInstanceDiscovery, new AuthenticationRequestParameters()
             {
                 RequestContext = new RequestContext(new MsalLogger(Guid.Empty, null)),
                 ClientId = TestConstants.ClientId,

@@ -134,8 +134,11 @@ namespace Test.MSAL.NET.Unit
             var certificate = new X509Certificate2("valid_cert.pfx", TestConstants.DefaultPassword);
             var clientAssertion = new ClientAssertionCertificate(certificate);
             var clientCredential = new ClientCredential(clientAssertion);
-            var app = new ConfidentialClientApplication(TestConstants.ClientId, TestConstants.RedirectUri, clientCredential, _cache, _cache);
-            app.ValidateAuthority = false;
+            var app = new ConfidentialClientApplication(_httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority, TestConstants.RedirectUri, clientCredential, _cache, _cache)
+            {
+                ValidateAuthority = false
+            };
 
             //Check for x5c claim
             HttpMessageHandlerFactory.AddMockHandler(X5CMockHandler);
@@ -155,8 +158,11 @@ namespace Test.MSAL.NET.Unit
             var certificate = new X509Certificate2("valid_cert.pfx", TestConstants.DefaultPassword);
             var clientAssertion = new ClientAssertionCertificate(certificate);
             var clientCredential = new ClientCredential(clientAssertion);
-            var app = new ConfidentialClientApplication(TestConstants.ClientId, TestConstants.RedirectUri, clientCredential, _cache, _cache);
-            app.ValidateAuthority = false;
+            var app = new ConfidentialClientApplication(_httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority, TestConstants.RedirectUri, clientCredential, _cache, _cache)
+            {
+                ValidateAuthority = false
+            };
             var userAssertion = new UserAssertion(TestConstants.DefaultAccessToken);
 
             //Check for x5c claim

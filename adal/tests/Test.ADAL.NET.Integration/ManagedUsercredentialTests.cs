@@ -102,7 +102,7 @@ namespace Test.ADAL.NET.Integration
 
             TokenCache cache = new TokenCache();
 
-            var context = new AuthenticationContext(TestConstants.DefaultAuthorityHomeTenant, true, cache);
+            var context = new AuthenticationContext(_httpManager, TestConstants.DefaultAuthorityHomeTenant, AuthorityValidationType.True, cache);
             var result =
                 await
                     context.AcquireTokenAsync(TestConstants.DefaultResource, TestConstants.DefaultClientId,
@@ -184,7 +184,7 @@ namespace Test.ADAL.NET.Integration
 
             TokenCache cache = new TokenCache();
 
-            var context = new AuthenticationContext(TestConstants.DefaultAuthorityHomeTenant, true, new TokenCache());
+            var context = new AuthenticationContext(_httpManager, TestConstants.DefaultAuthorityHomeTenant, AuthorityValidationType.True, new TokenCache());
 
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityHomeTenant,
             TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
@@ -292,7 +292,8 @@ namespace Test.ADAL.NET.Integration
         [Description("Test case where user realm discovery fails.")]
         public void UserRealmDiscoveryFailsTest()
         {
-            AuthenticationContext context = new AuthenticationContext(TestConstants.DefaultAuthorityCommonTenant);
+            AuthenticationContext context = new AuthenticationContext(
+                _httpManager, TestConstants.DefaultAuthorityCommonTenant, AuthorityValidationType.NotProvided, TokenCache.DefaultShared);
 
             CoreHttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler(TestConstants.GetUserRealmEndpoint(TestConstants.DefaultAuthorityCommonTenant) + "/" + TestConstants.DefaultDisplayableId)
             {
@@ -323,7 +324,8 @@ namespace Test.ADAL.NET.Integration
         [Description("Test case where user realm discovery cannot determine the user type.")]
         public async Task UnknownUserRealmDiscoveryTestAsync()
         {
-            AuthenticationContext context = new AuthenticationContext(TestConstants.DefaultAuthorityCommonTenant);
+            AuthenticationContext context = new AuthenticationContext(
+                _httpManager, TestConstants.DefaultAuthorityCommonTenant, AuthorityValidationType.NotProvided, TokenCache.DefaultShared);
             await context.Authenticator.UpdateFromTemplateAsync(null);
 
             CoreHttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler(TestConstants.GetUserRealmEndpoint(TestConstants.DefaultAuthorityCommonTenant) + "/" + TestConstants.DefaultDisplayableId)

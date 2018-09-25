@@ -252,7 +252,9 @@ namespace Test.MSAL.NET.Unit
                 ResponseMessage = MockHelpers.CreateSuccessTokenResponseMessage()
             });
 
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId);
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
             AuthenticationResult result = await app.AcquireTokenByIntegratedWindowsAuthAsync(TestConstants.Scope, TestConstants.User.Username).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
@@ -271,7 +273,9 @@ namespace Test.MSAL.NET.Unit
         {
             AddMockResponseForFederatedAccounts();
 
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId);
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             AuthenticationResult result = await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, _secureString).ConfigureAwait(false);
 
@@ -327,7 +331,9 @@ namespace Test.MSAL.NET.Unit
             });
 
             _cache.ClientId = TestConstants.ClientId;
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 UserTokenCache = _cache
             };
@@ -401,7 +407,9 @@ namespace Test.MSAL.NET.Unit
             });
 
             _cache.ClientId = TestConstants.ClientId;
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 UserTokenCache = _cache
             };
@@ -462,7 +470,9 @@ namespace Test.MSAL.NET.Unit
             });
 
             _cache.ClientId = TestConstants.ClientId;
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 UserTokenCache = _cache
             };
@@ -536,7 +546,9 @@ namespace Test.MSAL.NET.Unit
             });
 
             _cache.ClientId = TestConstants.ClientId;
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 UserTokenCache = _cache
             };
@@ -620,7 +632,9 @@ namespace Test.MSAL.NET.Unit
             });
 
             _cache.ClientId = TestConstants.ClientId;
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 UserTokenCache = _cache
             };
@@ -672,7 +686,9 @@ namespace Test.MSAL.NET.Unit
             });
 
             _cache.ClientId = TestConstants.ClientId;
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 UserTokenCache = _cache
             };
@@ -708,7 +724,9 @@ namespace Test.MSAL.NET.Unit
                 }
             });
 
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId);
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             AuthenticationResult result = await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, _secureString).ConfigureAwait(false);
 
@@ -727,7 +745,9 @@ namespace Test.MSAL.NET.Unit
             AddMockResponseforManagedAccounts();
 
             _cache.ClientId = TestConstants.ClientId;
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 UserTokenCache = _cache
             };
@@ -770,7 +790,9 @@ namespace Test.MSAL.NET.Unit
             });
 
             _cache.ClientId = TestConstants.ClientId;
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 UserTokenCache = _cache
             };

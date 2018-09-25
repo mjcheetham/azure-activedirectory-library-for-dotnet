@@ -90,7 +90,9 @@ namespace Test.MSAL.NET.Unit
         [Description("Test unified token cache")]
         public void UnifiedCache_MsalStoresToAndReadRtFromAdalCache()
         {
-            PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId);
+            PublicClientApplication app = new PublicClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             app.UserTokenCache.legacyCachePersistance = new TestLegacyCachePersistance();
 

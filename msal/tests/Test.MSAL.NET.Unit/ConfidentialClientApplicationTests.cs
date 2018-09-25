@@ -181,7 +181,10 @@ namespace Test.MSAL.NET.Unit
         [TestCategory("ConfidentialClientApplicationTests")]
         public void ConfidentialClientUsingSecretNoCacheProvidedTest()
         {
-            ConfidentialClientApplication app = new ConfidentialClientApplication(TestConstants.ClientId,
+            ConfidentialClientApplication app = new ConfidentialClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, 
+                TestConstants.ClientId,
+                ClientApplicationBase.DefaultAuthority,
                 TestConstants.RedirectUri, new ClientCredential(TestConstants.ClientSecret),
                 null, null)
             {
@@ -216,7 +219,9 @@ namespace Test.MSAL.NET.Unit
         [TestCategory("ConfidentialClientApplicationTests")]
         public void ConfidentialClientUsingSecretTest()
         {
-            ConfidentialClientApplication app = new ConfidentialClientApplication(TestConstants.ClientId,
+            ConfidentialClientApplication app = new ConfidentialClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, TestConstants.ClientId,
+                ClientApplicationBase.DefaultAuthority, 
                 TestConstants.RedirectUri, new ClientCredential(TestConstants.ClientSecret),
                 new TokenCache(), new TokenCache())
             {
@@ -270,7 +275,9 @@ namespace Test.MSAL.NET.Unit
 
         private ConfidentialClientApplication CreateConfidentialClient(ClientCredential cc, int tokenResponses)
         {
-            ConfidentialClientApplication app = new ConfidentialClientApplication(TestConstants.ClientId,
+            ConfidentialClientApplication app = new ConfidentialClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority,
                 TestConstants.RedirectUri, cc, new TokenCache(),
                 new TokenCache())
             {
@@ -364,7 +371,9 @@ namespace Test.MSAL.NET.Unit
         [TestCategory("ConfidentialClientApplicationTests")]
         public void GetAuthorizationRequestUrlNoRedirectUriTest()
         {
-            ConfidentialClientApplication app = new ConfidentialClientApplication(TestConstants.ClientId,
+            ConfidentialClientApplication app = new ConfidentialClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, 
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority,
                 TestConstants.RedirectUri, new ClientCredential(TestConstants.ClientSecret),
                 new TokenCache(), new TokenCache())
             {
@@ -404,7 +413,9 @@ namespace Test.MSAL.NET.Unit
         [TestCategory("ConfidentialClientApplicationTests")]
         public void GetAuthorizationRequestUrlB2CTest()
         {
-            ConfidentialClientApplication app = new ConfidentialClientApplication(TestConstants.ClientId,
+            ConfidentialClientApplication app = new ConfidentialClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, 
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority,
                 TestConstants.RedirectUri, new ClientCredential(TestConstants.ClientSecret),
                 new TokenCache(), new TokenCache())
             {
@@ -445,7 +456,9 @@ namespace Test.MSAL.NET.Unit
         [TestCategory("ConfidentialClientApplicationTests")]
         public void GetAuthorizationRequestUrlDuplicateParamsTest()
         {
-            ConfidentialClientApplication app = new ConfidentialClientApplication(TestConstants.ClientId,
+            ConfidentialClientApplication app = new ConfidentialClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority,
                 TestConstants.RedirectUri, new ClientCredential(TestConstants.ClientSecret),
                 new TokenCache(), new TokenCache())
             {
@@ -483,7 +496,9 @@ namespace Test.MSAL.NET.Unit
         public void GetAuthorizationRequestUrlCustomRedirectUriTest()
         {
             ConfidentialClientApplication app =
-                new ConfidentialClientApplication(TestConstants.ClientId, TestConstants.AuthorityGuestTenant,
+                new ConfidentialClientApplication(
+                    _httpManager, _authorityFactory, _aadInstanceDiscovery, 
+                    TestConstants.ClientId, TestConstants.AuthorityGuestTenant,
                     TestConstants.RedirectUri, new ClientCredential(TestConstants.ClientSecret),
                     new TokenCache(), new TokenCache())
                 { ValidateAuthority = false };
@@ -527,7 +542,9 @@ namespace Test.MSAL.NET.Unit
         [ExpectedException(typeof(HttpRequestException), "Cannot write more bytes to the buffer than the configured maximum buffer size: 1048576.")]
         public async Task HttpRequestExceptionIsNotSuppressed()
         {
-            var app = new ConfidentialClientApplication(TestConstants.ClientId,
+            var app = new ConfidentialClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, 
+                TestConstants.ClientId, ClientApplicationBase.DefaultAuthority,
                 TestConstants.RedirectUri, new ClientCredential(TestConstants.ClientSecret),
                 new TokenCache(), new TokenCache())
             {
@@ -589,7 +606,9 @@ namespace Test.MSAL.NET.Unit
             TokenCacheHelper.PopulateCache(cache.tokenCacheAccessor);
 
             var authority = _authorityFactory.CreateAuthority(TestConstants.AuthorityTestTenant, false).CanonicalAuthority;
-            var app = new ConfidentialClientApplication(TestConstants.ClientId, authority,
+            var app = new ConfidentialClientApplication(
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, 
+                TestConstants.ClientId, authority,
                 TestConstants.RedirectUri, new ClientCredential(TestConstants.ClientSecret),
                 null, cache)
             {
@@ -641,7 +660,8 @@ namespace Test.MSAL.NET.Unit
 
             ClientCredential cc =
                 new ClientCredential("secret");
-            var app = new ConfidentialClientApplication(TestConstants.ClientId, "https://" + TestConstants.ProductionPrefNetworkEnvironment + "/tfp/home/policy",
+            var app = new ConfidentialClientApplication(_httpManager, _authorityFactory, _aadInstanceDiscovery, 
+                TestConstants.ClientId, "https://" + TestConstants.ProductionPrefNetworkEnvironment + "/tfp/home/policy",
                 TestConstants.RedirectUri, cc, cache, null)
             {
                 ValidateAuthority = false

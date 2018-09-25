@@ -106,13 +106,17 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
         }
 
         private AuthenticationContext(string authority, AuthorityValidationType validateAuthority,
-            TokenCache tokenCache)
+            TokenCache tokenCache) : this(null, authority, validateAuthority, tokenCache)
+        {
+        }
+
+        internal AuthenticationContext(IHttpManager httpManager, string authority, AuthorityValidationType validateAuthority, TokenCache tokenCache)
         {
             // If authorityType is not provided (via first constructor), we validate by default (except for ASG and Office tenants).
             this.Authenticator = new Authenticator(authority, (validateAuthority != AuthorityValidationType.False));
             this.TokenCache = tokenCache;
 
-            _httpManager = new HttpManager(new HttpClientFactory());
+            _httpManager = httpManager ?? new HttpManager(new HttpClientFactory());
         }
 
         /// <summary>

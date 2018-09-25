@@ -78,7 +78,12 @@ namespace Test.ADAL.NET.Integration
         [Description("Test for AcquireToken with empty cache")]
         public async Task AcquireTokenWithEmptyCache_GetsTokenFromServiceTestAsync()
         {
-            AuthenticationContext context = new AuthenticationContext(TestConstants.DefaultAuthorityCommonTenant, new TokenCache());
+            AuthenticationContext context = new AuthenticationContext(
+                _httpManager, 
+                TestConstants.DefaultAuthorityCommonTenant, 
+                AuthorityValidationType.NotProvided, 
+                new TokenCache());
+
             await context.Authenticator.UpdateFromTemplateAsync(null);
 
             CoreHttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler()
@@ -147,7 +152,12 @@ namespace Test.ADAL.NET.Integration
         [Description("Integrated auth using upn of federated user.")]
         public async Task IntegratedAuthUsingUpn_GetsTokenFromServiceTestAsync()
         {
-            AuthenticationContext context = new AuthenticationContext(TestConstants.DefaultAuthorityCommonTenant, new TokenCache());
+            AuthenticationContext context = new AuthenticationContext(
+                _httpManager,
+                TestConstants.DefaultAuthorityCommonTenant,
+                AuthorityValidationType.NotProvided,
+                new TokenCache());
+
             await context.Authenticator.UpdateFromTemplateAsync(null);
 
             CoreHttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler()
@@ -215,10 +225,13 @@ namespace Test.ADAL.NET.Integration
 
         [TestMethod]
         [Description("Integrated auth missing mex and fails parsing")]
-        public async Task IntegratedAuthMissingMex_FailsMexParsingTestAsync()
+        public void IntegratedAuthMissingMex_FailsMexParsingTestAsync()
         {
-            AuthenticationContext context = new AuthenticationContext(TestConstants.DefaultAuthorityCommonTenant, new TokenCache());
-            await context.Authenticator.UpdateFromTemplateAsync(null);
+            AuthenticationContext context = new AuthenticationContext(
+                _httpManager,
+                TestConstants.DefaultAuthorityCommonTenant,
+                AuthorityValidationType.NotProvided,
+                new TokenCache());
 
             CoreHttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler()
             {
@@ -371,7 +384,12 @@ namespace Test.ADAL.NET.Integration
         [Description("Mex endpoint fails to resolve and results in a 404")]
         public async Task MexEndpointFailsToResolveTestAsync()
         {
-            AuthenticationContext context = new AuthenticationContext(TestConstants.DefaultAuthorityCommonTenant, new TokenCache());
+            AuthenticationContext context = new AuthenticationContext(
+                _httpManager,
+                TestConstants.DefaultAuthorityCommonTenant,
+                AuthorityValidationType.NotProvided,
+                new TokenCache());
+
             await context.Authenticator.UpdateFromTemplateAsync(null);
 
             CoreHttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler()
@@ -422,7 +440,12 @@ namespace Test.ADAL.NET.Integration
         [Description("Integrated auth using upn of federated user and Mex does not return integrated auth endpoint")]
         public async Task IntegratedAuthUsingUpn_MexDoesNotReturnAuthEndpointTestAsync()
         {
-            AuthenticationContext context = new AuthenticationContext(TestConstants.DefaultAuthorityCommonTenant, new TokenCache());
+            AuthenticationContext context = new AuthenticationContext(
+                _httpManager,
+                TestConstants.DefaultAuthorityCommonTenant,
+                AuthorityValidationType.NotProvided,
+                new TokenCache());
+
             await context.Authenticator.UpdateFromTemplateAsync(null);
 
             CoreHttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler()
@@ -480,7 +503,12 @@ namespace Test.ADAL.NET.Integration
         [Description("Password of federated user provided and Mex does not return username/password endpoint")]
         public async Task PasswordAndUpnProvided_MexDoesNotReturnUsernamePasswordEndpointTestAsync()
         {
-            AuthenticationContext context = new AuthenticationContext(TestConstants.DefaultAuthorityCommonTenant, new TokenCache());
+            AuthenticationContext context = new AuthenticationContext(
+                _httpManager,
+                TestConstants.DefaultAuthorityCommonTenant,
+                AuthorityValidationType.NotProvided,
+                new TokenCache());
+
             await context.Authenticator.UpdateFromTemplateAsync(null);
 
             CoreHttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler()

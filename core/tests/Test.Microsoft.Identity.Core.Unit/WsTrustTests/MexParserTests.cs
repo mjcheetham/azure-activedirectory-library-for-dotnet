@@ -103,11 +103,9 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
                 }
             });
 
-            var httpManager = new HttpManager(new HttpClientFactory());
-
             try
             {
-                MexParser mexParser = new MexParser(httpManager, UserAuthType.IntegratedAuth, _requestContext);
+                MexParser mexParser = new MexParser(_httpManager, UserAuthType.IntegratedAuth, _requestContext);
                 await mexParser.FetchWsTrustAddressFromMexAsync("http://somehost");
                 Assert.Fail("We expect an exception to be thrown here");
             }
@@ -133,12 +131,10 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
                 }
             });
 
-            var httpManager = new HttpManager(new HttpClientFactory());
-
             var requestContext = new RequestContext(new TestLogger(Guid.NewGuid(), null));
             try
             {
-                MexParser mexParser = new MexParser(httpManager, UserAuthType.IntegratedAuth, requestContext);
+                MexParser mexParser = new MexParser(_httpManager, UserAuthType.IntegratedAuth, requestContext);
                 await mexParser.FetchWsTrustAddressFromMexAsync("http://somehost");
                 Assert.Fail("We expect an exception to be thrown here");
             }
