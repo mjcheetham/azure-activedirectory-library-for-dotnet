@@ -27,14 +27,17 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Identity.Core.Http;
+using Microsoft.Identity.Core.Instance;
 using Microsoft.Identity.Core.OAuth2;
 
 namespace Microsoft.Identity.Client.Internal.Requests
 {
     internal class OnBehalfOfRequest : RequestBase
     {
-        public OnBehalfOfRequest(AuthenticationRequestParameters authenticationRequestParameters)
-            : base(authenticationRequestParameters)
+        public OnBehalfOfRequest(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery,
+            AuthenticationRequestParameters authenticationRequestParameters)
+            : base(httpManager, authorityFactory, aadInstanceDiscovery, authenticationRequestParameters)
         {
             if (authenticationRequestParameters.UserAssertion == null)
             {
@@ -54,7 +57,7 @@ namespace Microsoft.Identity.Client.Internal.Requests
             if (LoadFromCache)
             {
                 MsalAccessTokenItem = 
-                    await TokenCache.FindAccessTokenAsync(AuthenticationRequestParameters).ConfigureAwait(false);
+                    await TokenCache.FindAccessTokenAsync(AuthorityFactory, AadInstanceDiscovery, AuthenticationRequestParameters).ConfigureAwait(false);
             }
         }
 

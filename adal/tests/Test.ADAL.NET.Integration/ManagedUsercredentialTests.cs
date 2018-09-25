@@ -44,19 +44,23 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Cache;
 using CoreHttpClientFactory = Microsoft.Identity.Core.Http.HttpClientFactory;
 using CoreHttpMessageHandlerFactory = Microsoft.Identity.Core.Http.HttpMessageHandlerFactory;
 using Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Platform;
+using Microsoft.Identity.Core.Http;
 
 namespace Test.ADAL.NET.Integration
 {
     [TestClass]
     public class ManagedUserCredentialTests
     {
+        private IHttpManager _httpManager;
+
         [TestInitialize]
         public void Initialize()
         {
             AdalHttpMessageHandlerFactory.InitializeMockProvider();
             ResetInstanceDiscovery();
-            CoreHttpClientFactory.ReturnHttpClientForMocks = true;
             CoreHttpMessageHandlerFactory.ClearMockHandlers();
+
+            _httpManager = new HttpManager(new HttpClientFactory(true));
         }
 
         public void ResetInstanceDiscovery()

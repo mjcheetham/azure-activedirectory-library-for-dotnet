@@ -26,20 +26,24 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.Identity.Client.Internal;
+using Microsoft.Identity.Core.Http;
+using Microsoft.Identity.Core.Instance;
 
 namespace Microsoft.Identity.Client
 {
+    // TODO: why is this in a separate partial instead of just being in PublicClientApplication?  
+    // is there something in the multi-targeting that's doing this?  If so, let's at least add a comment here.
+    // If not, let's remove the partial...
     public sealed partial class PublicClientApplication : ClientApplicationBase
     {
-
         /// <summary>
         /// Constructor to create application instance. This constructor is only available for Desktop and NetCore apps
         /// </summary>
         /// <param name="clientId">Client id of the application</param>
         /// <param name="authority">Default authority to be used for the application</param>
         /// <param name="userTokenCache">Instance of TokenCache.</param>
-        public PublicClientApplication(string clientId, string authority, TokenCache userTokenCache) : base(clientId,
-            authority, PlatformPlugin.PlatformInformation.GetDefaultRedirectUri(clientId), true)
+        public PublicClientApplication(string clientId, string authority, TokenCache userTokenCache) 
+            : base(null, null, null, clientId, authority, PlatformPlugin.PlatformInformation.GetDefaultRedirectUri(clientId), true)
         {
             UserTokenCache = userTokenCache;
         }

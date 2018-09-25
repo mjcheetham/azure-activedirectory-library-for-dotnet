@@ -34,6 +34,7 @@ using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Instance;
 using Microsoft.Identity.Core.UI;
 using Microsoft.Identity.Core.Telemetry;
+using Microsoft.Identity.Core.Http;
 
 namespace Microsoft.Identity.Client
 {
@@ -88,14 +89,21 @@ namespace Microsoft.Identity.Client
         /// </list>
         /// Note that this setting needs to be consistent with what is declared in the application registration portal 
         /// </param>
-        public PublicClientApplication(string clientId, string authority)
-            : base(clientId, authority, PlatformPlugin.PlatformInformation.GetDefaultRedirectUri(clientId), true)
+        public PublicClientApplication(string clientId, string authority) : this(null, null, null, clientId, authority)
+        {
+        }
+
+        internal PublicClientApplication(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery,
+            string clientId, string authority)
+            : base(httpManager, authorityFactory, aadInstanceDiscovery, 
+                  clientId, authority, PlatformPlugin.PlatformInformation.GetDefaultRedirectUri(clientId), true)
         {
             UserTokenCache = new TokenCache()
             {
                 ClientId = clientId
             };
         }
+
         // netcoreapp does not support UI at the moment and all the Acquire* methods use UI;
 #if !NET_CORE
 
@@ -141,7 +149,7 @@ namespace Microsoft.Identity.Client
         /// and will consent to scopes and do multi-factor authentication if such a policy was enabled in the Azure AD tenant.</remarks>
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForLoginHintCommonAsync(authority, scopes, null, null,
@@ -157,7 +165,7 @@ namespace Microsoft.Identity.Client
         /// <returns>Authentication result containing a token for the requested scopes and account</returns>
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes, string loginHint)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForLoginHintCommonAsync(authority, scopes, null, loginHint,
@@ -175,7 +183,7 @@ namespace Microsoft.Identity.Client
             IEnumerable<string> scopes,
             IAccount account)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForUserCommonAsync(authority, scopes, null, account,
@@ -195,7 +203,7 @@ namespace Microsoft.Identity.Client
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes, string loginHint,
             UIBehavior behavior, string extraQueryParameters)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForLoginHintCommonAsync(authority, scopes, null, loginHint,
@@ -215,7 +223,7 @@ namespace Microsoft.Identity.Client
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes, IAccount account,
             UIBehavior behavior, string extraQueryParameters)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForUserCommonAsync(authority, scopes, null, account, behavior,
@@ -239,7 +247,7 @@ namespace Microsoft.Identity.Client
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes, string loginHint,
             UIBehavior behavior, string extraQueryParameters, IEnumerable<string> extraScopesToConsent, string authority)
         {
-            Authority authorityInstance = Core.Instance.Authority.CreateAuthority(authority, ValidateAuthority);
+            Authority authorityInstance = AuthorityFactory.CreateAuthority(authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForLoginHintCommonAsync(authorityInstance, scopes, extraScopesToConsent,
@@ -263,7 +271,7 @@ namespace Microsoft.Identity.Client
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes, IAccount account,
             UIBehavior behavior, string extraQueryParameters, IEnumerable<string> extraScopesToConsent, string authority)
         {
-            Authority authorityInstance = Core.Instance.Authority.CreateAuthority(authority, ValidateAuthority);
+            Authority authorityInstance = AuthorityFactory.CreateAuthority(authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForUserCommonAsync(authorityInstance, scopes, extraScopesToConsent, account,
@@ -282,7 +290,7 @@ namespace Microsoft.Identity.Client
         /// and will consent to scopes and do multi-factor authentication if such a policy was enabled in the Azure AD tenant.</remarks>
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes, UIParent parent)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForLoginHintCommonAsync(authority, scopes, null, null,
@@ -300,7 +308,7 @@ namespace Microsoft.Identity.Client
         /// <returns>Authentication result containing a token for the requested scopes and login</returns>
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes, string loginHint, UIParent parent)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForLoginHintCommonAsync(authority, scopes, null, loginHint,
@@ -319,7 +327,7 @@ namespace Microsoft.Identity.Client
             IEnumerable<string> scopes,
             IAccount account, UIParent parent)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForUserCommonAsync(authority, scopes, null, account,
@@ -340,7 +348,7 @@ namespace Microsoft.Identity.Client
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes, string loginHint,
             UIBehavior behavior, string extraQueryParameters, UIParent parent)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForLoginHintCommonAsync(authority, scopes, null, loginHint,
@@ -361,7 +369,7 @@ namespace Microsoft.Identity.Client
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes, IAccount account,
             UIBehavior behavior, string extraQueryParameters, UIParent parent)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForUserCommonAsync(authority, scopes, null, account, behavior,
@@ -386,7 +394,7 @@ namespace Microsoft.Identity.Client
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes, string loginHint,
             UIBehavior behavior, string extraQueryParameters, IEnumerable<string> extraScopesToConsent, string authority, UIParent parent)
         {
-            Authority authorityInstance = Core.Instance.Authority.CreateAuthority(authority, ValidateAuthority);
+            Authority authorityInstance = AuthorityFactory.CreateAuthority(authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForLoginHintCommonAsync(authorityInstance, scopes, extraScopesToConsent,
@@ -411,7 +419,7 @@ namespace Microsoft.Identity.Client
         public async Task<AuthenticationResult> AcquireTokenAsync(IEnumerable<string> scopes, IAccount account,
         UIBehavior behavior, string extraQueryParameters, IEnumerable<string> extraScopesToConsent, string authority, UIParent parent)
         {
-            Authority authorityInstance = Core.Instance.Authority.CreateAuthority(authority, ValidateAuthority);
+            Authority authorityInstance = AuthorityFactory.CreateAuthority(authority, ValidateAuthority);
             return
                 await
                     AcquireTokenForUserCommonAsync(authorityInstance, scopes, extraScopesToConsent, account,
@@ -454,7 +462,7 @@ namespace Microsoft.Identity.Client
 #endif
 
             var handler =
-                new InteractiveRequest(requestParams, extraScopesToConsent, loginHint, behavior,
+                new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams, extraScopesToConsent, loginHint, behavior,
                     CreateWebAuthenticationDialog(parent, behavior, requestParams.RequestContext))
                 { ApiId = apiId };
             return await handler.RunAsync().ConfigureAwait(false);
@@ -474,7 +482,7 @@ namespace Microsoft.Identity.Client
 #endif
 
             var handler =
-                new InteractiveRequest(requestParams, extraScopesToConsent, behavior,
+                new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams, extraScopesToConsent, behavior,
                     CreateWebAuthenticationDialog(parent, behavior, requestParams.RequestContext))
                 { ApiId = apiId };
             return await handler.RunAsync().ConfigureAwait(false);
@@ -529,9 +537,9 @@ namespace Microsoft.Identity.Client
 
         private async Task<AuthenticationResult> AcquireTokenByUsernamePasswordAsync(IEnumerable<string> scopes, UsernamePasswordInput usernamePasswordInput)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             var requestParams = CreateRequestParameters(authority, scopes, null, UserTokenCache);
-            var handler = new UsernamePasswordRequest(requestParams, usernamePasswordInput)
+            var handler = new UsernamePasswordRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams, usernamePasswordInput)
             {
                 ApiId = ApiEvent.ApiIds.AcquireTokenWithScopeUser
             };
@@ -563,9 +571,9 @@ namespace Microsoft.Identity.Client
 
         private async Task<AuthenticationResult> AcquireTokenByIWAAsync(IEnumerable<string> scopes, IntegratedWindowsAuthInput iwaInput)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             var requestParams = CreateRequestParameters(authority, scopes, null, UserTokenCache);
-            var handler = new IntegratedWindowsAuthRequest(requestParams, iwaInput)
+            var handler = new IntegratedWindowsAuthRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams, iwaInput)
             {
                 ApiId = ApiEvent.ApiIds.AcquireTokenWithScopeUser
             };

@@ -55,13 +55,14 @@ namespace Microsoft.Identity.Core.Realm
         [DataMember(Name = "cloud_audience_urn")]
         public string CloudAudienceUrn { get; set; }
 
-        internal static async Task<UserRealmDiscoveryResponse> CreateByDiscoveryAsync(string userRealmUriPrefix, string userName, RequestContext requestContext)
+        // TODO: this shouldn't be part of the data object, but in a separate handler class
+        internal static async Task<UserRealmDiscoveryResponse> CreateByDiscoveryAsync(IHttpManager httpManager, string userRealmUriPrefix, string userName, RequestContext requestContext)
         {
             var msg = "Sending request to userrealm endpoint.";
             requestContext.Logger.Info(msg);
             requestContext.Logger.InfoPii(msg);
 
-            var httpResponse = await HttpRequest.SendGetAsync(
+            var httpResponse = await httpManager.SendGetAsync(
                 new UriBuilder(userRealmUriPrefix + userName + "?api-version=1.0").Uri, null, requestContext).ConfigureAwait(false);
             return httpResponse.StatusCode == System.Net.HttpStatusCode.OK ? JsonHelper.DeserializeFromJson<UserRealmDiscoveryResponse>(httpResponse.Body) : null;
         }

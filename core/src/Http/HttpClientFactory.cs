@@ -30,17 +30,23 @@ using System.Net.Http.Headers;
 
 namespace Microsoft.Identity.Core.Http
 {
-    internal class HttpClientFactory
+    // TODO: need to make this internal
+    public interface IHttpClientFactory
+    {
+        HttpClient GetHttpClient();
+    }
+
+    internal class HttpClientFactory : IHttpClientFactory
     {
         // as per guidelines HttpClient should be a singeton instance in an application.
         private static HttpClient _client;
         private static readonly object LockObj = new object();
-        public static bool ReturnHttpClientForMocks { set; get; }
+        private readonly bool _returnHttpClientForMocks;
         public const long MaxResponseContentBufferSizeInBytes = 1024*1024;
 
-        private static HttpClient CreateHttpClient()
+        private HttpClient CreateHttpClient()
         {
-            var httpClient = new HttpClient(HttpMessageHandlerFactory.GetMessageHandler(ReturnHttpClientForMocks))
+            var httpClient = new HttpClient(HttpMessageHandlerFactory.GetMessageHandler(_returnHttpClientForMocks))
             {
                 MaxResponseContentBufferSize = MaxResponseContentBufferSizeInBytes
             };
@@ -51,14 +57,21 @@ namespace Microsoft.Identity.Core.Http
             return httpClient;
         }
 
-        public static HttpClient GetHttpClient()
+        public HttpClientFactory(bool returnHttpClientForMocks = false)
+        {
+            _returnHttpClientForMocks = returnHttpClientForMocks;
+        }
+
+        public HttpClient GetHttpClient()
         {
             // we return a new instanceof httpclient beacause there
             // is no way to provide new http request message handler
             // for each request made and it makes mocking of network calls 
             // impossible. So to circumvent, we simply return new instance for
             // for mocking purposes.
-            if (ReturnHttpClientForMocks)
+
+            // TODO: since we're now abstracting httpclient out under IHttpManager, can we just get rid of this?
+            if (_returnHttpClientForMocks)
             {
                 return CreateHttpClient();
             }

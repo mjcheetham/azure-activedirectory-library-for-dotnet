@@ -31,28 +31,129 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Identity.Core.Http;
 using Microsoft.Identity.Core.OAuth2;
 
 namespace Microsoft.Identity.Core.Instance
 {
+    internal interface IAuthorityFactory
+    {
+        Authority CreateAuthority(string authority, bool validateAuthority);
+        AuthorityType GetAuthorityType(string authority);
+    }
+
+    internal class AuthorityFactory : IAuthorityFactory
+    {
+        private readonly IHttpManager _httpManager;
+        private readonly IAadInstanceDiscovery _aadInstanceDiscovery;
+
+        public AuthorityFactory(IHttpManager httpManager, IAadInstanceDiscovery aadInstanceDiscovery)
+        {
+            _httpManager = httpManager;
+            _aadInstanceDiscovery = aadInstanceDiscovery;
+        }
+
+        public Authority CreateAuthority(string authority, bool validateAuthority)
+        {
+            authority = CanonicalizeUri(authority);
+            ValidateAsUri(authority);
+
+            switch (GetAuthorityType(authority))
+            {
+            case AuthorityType.Adfs:
+                throw CoreExceptionFactory.Instance.GetClientException(CoreErrorCodes.InvalidAuthorityType,
+                   "ADFS is not a supported authority");
+
+            case AuthorityType.B2C:
+                return new B2CAuthority(_httpManager, _aadInstanceDiscovery, authority, validateAuthority);
+
+            case AuthorityType.Aad:
+                return new AadAuthority(_httpManager, _aadInstanceDiscovery, authority, validateAuthority);
+
+            default:
+                throw CoreExceptionFactory.Instance.GetClientException(CoreErrorCodes.InvalidAuthorityType,
+                 "Usupported authority type");
+            }
+        }
+
+        private static string CanonicalizeUri(string uri)
+        {
+            if (!string.IsNullOrWhiteSpace(uri) && !uri.EndsWith("/", StringComparison.OrdinalIgnoreCase))
+            {
+                uri = uri + "/";
+            }
+
+            return uri.ToLowerInvariant();
+        }
+
+        public static void ValidateAsUri(string authority)
+        {
+            if (string.IsNullOrWhiteSpace(authority))
+            {
+                throw new ArgumentNullException(nameof(authority));
+            }
+
+            if (!Uri.IsWellFormedUriString(authority, UriKind.Absolute))
+            {
+                throw new ArgumentException(CoreErrorMessages.AuthorityInvalidUriFormat, nameof(authority));
+            }
+
+            var authorityUri = new Uri(authority);
+            if (authorityUri.Scheme != "https")
+            {
+                throw new ArgumentException(CoreErrorMessages.AuthorityUriInsecure, nameof(authority));
+            }
+
+            string path = authorityUri.AbsolutePath.Substring(1);
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                throw new ArgumentException(CoreErrorMessages.AuthorityUriInvalidPath, nameof(authority));
+            }
+
+            string[] pathSegments = authorityUri.AbsolutePath.Substring(1).Split('/');
+            if (pathSegments == null || pathSegments.Length == 0)
+            {
+                throw new ArgumentException(CoreErrorMessages.AuthorityUriInvalidPath);
+            }
+        }
+
+        public AuthorityType GetAuthorityType(string authority)
+        {
+            var firstPathSegment = Authority.GetFirstPathSegment(authority);
+
+            if (string.Equals(firstPathSegment, "adfs", StringComparison.OrdinalIgnoreCase))
+            {
+                return AuthorityType.Adfs;
+            }
+            else if (string.Equals(firstPathSegment, B2CAuthority.Prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return AuthorityType.B2C;
+            }
+            else
+            {
+                return AuthorityType.Aad;
+            }
+        }
+    }
+
     internal abstract class Authority
     {
         internal static readonly HashSet<string> TenantlessTenantNames =
             new HashSet<string>(new[] {"common", "organizations", "consumers"});
         private bool _resolved;
 
+        // TODO: remove this from being a static
         internal static readonly ConcurrentDictionary<string, Authority> ValidatedAuthorities =
             new ConcurrentDictionary<string, Authority>();
 
         protected abstract Task<string> GetOpenIdConfigurationEndpointAsync(string userPrincipalName, RequestContext requestContext);
 
-        public static Authority CreateAuthority(string authority, bool validateAuthority)
-        {
-            return CreateInstance(authority, validateAuthority);
-        }
+        protected IHttpManager HttpManager { get; }
 
-        protected Authority(string authority, bool validateAuthority)
+        protected Authority(IHttpManager httpManager, string authority, bool validateAuthority)
         {
+            HttpManager = httpManager;
+
             UriBuilder authorityUri = new UriBuilder(authority);
             Host = authorityUri.Host;
 
@@ -87,82 +188,10 @@ namespace Microsoft.Identity.Core.Instance
             await Task.FromResult(0).ConfigureAwait(false);
         }
 
-        public static void ValidateAsUri(string authority)
-        {
-            if (string.IsNullOrWhiteSpace(authority))
-            {
-                throw new ArgumentNullException(nameof(authority));
-            }
-
-            if (!Uri.IsWellFormedUriString(authority, UriKind.Absolute))
-            {
-                throw new ArgumentException(CoreErrorMessages.AuthorityInvalidUriFormat, nameof(authority));
-            }
-            
-            var authorityUri = new Uri(authority);
-            if (authorityUri.Scheme != "https")
-            {
-                throw new ArgumentException(CoreErrorMessages.AuthorityUriInsecure, nameof(authority));
-            }
-
-            string path = authorityUri.AbsolutePath.Substring(1);
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                throw new ArgumentException(CoreErrorMessages.AuthorityUriInvalidPath, nameof(authority));
-            }
-
-            string[] pathSegments = authorityUri.AbsolutePath.Substring(1).Split('/');
-            if (pathSegments == null || pathSegments.Length == 0)
-            {
-                throw new ArgumentException(CoreErrorMessages.AuthorityUriInvalidPath);
-            }
-        }
-
         internal static string GetFirstPathSegment(string authority)
         {
             return new Uri(authority).Segments[1].TrimEnd('/');
         } 
-
-        internal static AuthorityType GetAuthorityType(string authority)
-        {
-            var firstPathSegment = GetFirstPathSegment(authority);
-
-            if (string.Equals(firstPathSegment, "adfs", StringComparison.OrdinalIgnoreCase))
-            {
-                return AuthorityType.Adfs;
-            }
-            else if (string.Equals(firstPathSegment, B2CAuthority.Prefix, StringComparison.OrdinalIgnoreCase))
-            {
-                return AuthorityType.B2C;
-            }
-            else
-            {
-                return AuthorityType.Aad;
-            }
-        }
-
-        private static Authority CreateInstance(string authority, bool validateAuthority)
-        {
-            authority = CanonicalizeUri(authority);
-            ValidateAsUri(authority);
-
-            switch (GetAuthorityType(authority))
-            {
-                case AuthorityType.Adfs:
-                    throw CoreExceptionFactory.Instance.GetClientException(CoreErrorCodes.InvalidAuthorityType,
-                       "ADFS is not a supported authority");
-
-                case AuthorityType.B2C:
-                    return new B2CAuthority(authority, validateAuthority);
-
-                case AuthorityType.Aad:
-                    return new AadAuthority(authority, validateAuthority);
-
-                default:
-                    throw CoreExceptionFactory.Instance.GetClientException(CoreErrorCodes.InvalidAuthorityType,
-                     "Usupported authority type");
-            }
-        }
 
         public async Task ResolveEndpointsAsync(string userPrincipalName, RequestContext requestContext)
         {
@@ -252,7 +281,7 @@ namespace Microsoft.Identity.Core.Instance
         private async Task<TenantDiscoveryResponse> DiscoverEndpointsAsync(string openIdConfigurationEndpoint,
             RequestContext requestContext)
         {
-            OAuth2Client client = new OAuth2Client();
+            OAuth2Client client = new OAuth2Client(HttpManager);
             return
                 await
                     client.ExecuteRequestAsync<TenantDiscoveryResponse>(new Uri(openIdConfigurationEndpoint),
@@ -281,16 +310,6 @@ namespace Microsoft.Identity.Core.Instance
             };
 
             return uriBuilder.Uri.AbsoluteUri;
-        }
-
-        public static string CanonicalizeUri(string uri)
-        {
-            if (!string.IsNullOrWhiteSpace(uri) && !uri.EndsWith("/", StringComparison.OrdinalIgnoreCase))
-            {
-                uri = uri + "/";
-            }
-
-            return uri.ToLowerInvariant();
         }
     }
 }

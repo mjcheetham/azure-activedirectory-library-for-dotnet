@@ -33,6 +33,7 @@ using Microsoft.Identity.Core.Instance;
 using Microsoft.Identity.Client.Internal;
 using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Telemetry;
+using Microsoft.Identity.Core.Http;
 
 namespace Microsoft.Identity.Client
 {
@@ -110,7 +111,7 @@ namespace Microsoft.Identity.Client
         /// enables app developers to create a confidential client application requesting tokens with the default authority.
         public ConfidentialClientApplication(string clientId, string authority, string redirectUri,
             ClientCredential clientCredential, TokenCache userTokenCache, TokenCache appTokenCache)
-            : base(clientId, authority, redirectUri, true)
+            : base(null, null, null, clientId, authority, redirectUri, true)
         {
             ClientCredential = clientCredential;
             UserTokenCache = userTokenCache;
@@ -139,11 +140,9 @@ namespace Microsoft.Identity.Client
         /// <seealso cref="AcquireTokenOnBehalfOfAsync(IEnumerable{string}, UserAssertion, string)"/> for the on-behalf-of flow when specifying the authority
         public async Task<AuthenticationResult> AcquireTokenOnBehalfOfAsync(IEnumerable<string> scopes, UserAssertion userAssertion)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
-            return
-                await
-                    AcquireTokenOnBehalfCommonAsync(authority, scopes, userAssertion, ApiEvent.ApiIds.AcquireTokenOnBehalfOfWithScopeUser, false)
-                        .ConfigureAwait(false);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
+            return await AcquireTokenOnBehalfCommonAsync(authority, scopes, userAssertion, 
+                ApiEvent.ApiIds.AcquireTokenOnBehalfOfWithScopeUser, false).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -161,11 +160,9 @@ namespace Microsoft.Identity.Client
         public async Task<AuthenticationResult> AcquireTokenOnBehalfOfAsync(IEnumerable<string> scopes, UserAssertion userAssertion,
             string authority)
         {
-            Authority authorityInstance = Core.Instance.Authority.CreateAuthority(authority, ValidateAuthority);
-            return
-                await
-                    AcquireTokenOnBehalfCommonAsync(authorityInstance, scopes, userAssertion, ApiEvent.ApiIds.AcquireTokenOnBehalfOfWithScopeUserAuthority, false)
-                        .ConfigureAwait(false);
+            Authority authorityInstance = AuthorityFactory.CreateAuthority(authority, ValidateAuthority);
+            return await AcquireTokenOnBehalfCommonAsync(authorityInstance, scopes, userAssertion, 
+                ApiEvent.ApiIds.AcquireTokenOnBehalfOfWithScopeUserAuthority, false).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -181,11 +178,9 @@ namespace Microsoft.Identity.Client
         /// <returns>Authentication result containing a token for the requested scopes and account</returns>
         async Task<AuthenticationResult> IConfidentialClientApplicationWithCertificate.AcquireTokenOnBehalfOfWithCertificateAsync(IEnumerable<string> scopes, UserAssertion userAssertion)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
-            return
-                await
-                    AcquireTokenOnBehalfCommonAsync(authority, scopes, userAssertion, ApiEvent.ApiIds.AcquireTokenOnBehalfOfWithScopeUser, true)
-                        .ConfigureAwait(false);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
+            return await AcquireTokenOnBehalfCommonAsync(authority, scopes, userAssertion, 
+                ApiEvent.ApiIds.AcquireTokenOnBehalfOfWithScopeUser, true).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -203,11 +198,9 @@ namespace Microsoft.Identity.Client
         async Task<AuthenticationResult> IConfidentialClientApplicationWithCertificate.AcquireTokenOnBehalfOfWithCertificateAsync(IEnumerable<string> scopes, UserAssertion userAssertion,
             string authority)
         {
-            Authority authorityInstance = Core.Instance.Authority.CreateAuthority(authority, ValidateAuthority);
-            return
-                await
-                    AcquireTokenOnBehalfCommonAsync(authorityInstance, scopes, userAssertion, ApiEvent.ApiIds.AcquireTokenOnBehalfOfWithScopeUserAuthority, true)
-                        .ConfigureAwait(false);
+            Authority authorityInstance = AuthorityFactory.CreateAuthority(authority, ValidateAuthority);
+            return await AcquireTokenOnBehalfCommonAsync(authorityInstance, scopes, userAssertion, 
+                ApiEvent.ApiIds.AcquireTokenOnBehalfOfWithScopeUserAuthority, true).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -222,11 +215,9 @@ namespace Microsoft.Identity.Client
         /// <returns>Authentication result containing token of the user for the requested scopes</returns>
         public async Task<AuthenticationResult> AcquireTokenByAuthorizationCodeAsync(string authorizationCode, IEnumerable<string> scopes)
         {
-            return
-                await
-                    AcquireTokenByAuthorizationCodeCommonAsync(
-                        authorizationCode, scopes, new Uri(RedirectUri),
-                        ApiEvent.ApiIds.AcquireTokenByAuthorizationCodeWithCodeScope, false).ConfigureAwait(false);
+            return await AcquireTokenByAuthorizationCodeCommonAsync(
+                authorizationCode, scopes, new Uri(RedirectUri),
+                ApiEvent.ApiIds.AcquireTokenByAuthorizationCodeWithCodeScope, false).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -240,9 +231,8 @@ namespace Microsoft.Identity.Client
         /// <returns>Authentication result containing the token of the user for the requested scopes</returns>
         public async Task<AuthenticationResult> AcquireTokenForClientAsync(IEnumerable<string> scopes)
         {
-            return
-                await
-                    AcquireTokenForClientCommonAsync(scopes, false, ApiEvent.ApiIds.AcquireTokenForClientWithScope, false).ConfigureAwait(false);
+            return await AcquireTokenForClientCommonAsync(scopes, false, 
+                ApiEvent.ApiIds.AcquireTokenForClientWithScope, false).ConfigureAwait(false);
         }
         /// <summary>
         /// Acquires a token from the authority configured in the app, for the confidential client itself (in the name of no user)
@@ -257,9 +247,8 @@ namespace Microsoft.Identity.Client
         /// <returns>Authentication result containing token of the user for the requested scopes</returns>
         public async Task<AuthenticationResult> AcquireTokenForClientAsync(IEnumerable<string> scopes, bool forceRefresh)
         {
-            return
-                await
-                    AcquireTokenForClientCommonAsync(scopes, forceRefresh, ApiEvent.ApiIds.AcquireTokenForClientWithScopeRefresh, false).ConfigureAwait(false);
+            return await AcquireTokenForClientCommonAsync(scopes, forceRefresh, 
+                ApiEvent.ApiIds.AcquireTokenForClientWithScopeRefresh, false).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -274,9 +263,8 @@ namespace Microsoft.Identity.Client
         /// <returns>Authentication result containing application token for the requested scopes</returns>
         async Task<AuthenticationResult> IConfidentialClientApplicationWithCertificate.AcquireTokenForClientWithCertificateAsync(IEnumerable<string> scopes)
         {
-            return
-                await
-                    AcquireTokenForClientCommonAsync(scopes, false, ApiEvent.ApiIds.AcquireTokenForClientWithScope, true).ConfigureAwait(false);
+            return await AcquireTokenForClientCommonAsync(scopes, false, 
+                ApiEvent.ApiIds.AcquireTokenForClientWithScope, true).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -293,9 +281,8 @@ namespace Microsoft.Identity.Client
         /// <returns>Authentication result containing application token for the requested scopes</returns>
         async Task<AuthenticationResult> IConfidentialClientApplicationWithCertificate.AcquireTokenForClientWithCertificateAsync(IEnumerable<string> scopes, bool forceRefresh)
         {
-            return
-                await
-                    AcquireTokenForClientCommonAsync(scopes, forceRefresh, ApiEvent.ApiIds.AcquireTokenForClientWithScopeRefresh, true).ConfigureAwait(false);
+            return await AcquireTokenForClientCommonAsync(scopes, forceRefresh, 
+                ApiEvent.ApiIds.AcquireTokenForClientWithScopeRefresh, true).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -312,14 +299,13 @@ namespace Microsoft.Identity.Client
         public async Task<Uri> GetAuthorizationRequestUrlAsync(IEnumerable<string> scopes, string loginHint,
             string extraQueryParameters)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
-            var requestParameters =
-                CreateRequestParameters(authority, scopes, null, UserTokenCache);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
+            var requestParameters = CreateRequestParameters(authority, scopes, null, UserTokenCache);
             requestParameters.ClientId = ClientId;
             requestParameters.ExtraQueryParameters = extraQueryParameters;
 
-            var handler =
-                new InteractiveRequest(requestParameters, null, loginHint, UIBehavior.SelectAccount, null);
+            var handler = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
+                requestParameters, null, loginHint, UIBehavior.SelectAccount, null);
             return await handler.CreateAuthorizationUriAsync().ConfigureAwait(false);
         }
 
@@ -342,15 +328,15 @@ namespace Microsoft.Identity.Client
         public async Task<Uri> GetAuthorizationRequestUrlAsync(IEnumerable<string> scopes, string redirectUri, string loginHint,
             string extraQueryParameters, IEnumerable<string> extraScopesToConsent, string authority)
         {
-            Authority authorityInstance = Core.Instance.Authority.CreateAuthority(authority, ValidateAuthority);
+            Authority authorityInstance = AuthorityFactory.CreateAuthority(authority, ValidateAuthority);
             var requestParameters = CreateRequestParameters(authorityInstance, scopes, null,
                 UserTokenCache);
             requestParameters.RedirectUri = new Uri(redirectUri);
             requestParameters.ClientId = ClientId;
             requestParameters.ExtraQueryParameters = extraQueryParameters;
 
-            var handler =
-                new InteractiveRequest(requestParameters, extraScopesToConsent, loginHint, UIBehavior.SelectAccount, null);
+            var handler = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
+                requestParameters, extraScopesToConsent, loginHint, UIBehavior.SelectAccount, null);
             return await handler.CreateAuthorizationUriAsync().ConfigureAwait(false);
         }
 
@@ -360,12 +346,15 @@ namespace Microsoft.Identity.Client
 
         private async Task<AuthenticationResult> AcquireTokenForClientCommonAsync(IEnumerable<string> scopes, bool forceRefresh, ApiEvent.ApiIds apiId, bool sendCertificate)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
-            AuthenticationRequestParameters parameters = CreateRequestParameters(authority, scopes, null,
-                AppTokenCache);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
+            AuthenticationRequestParameters parameters = CreateRequestParameters(authority, scopes, null, AppTokenCache);
             parameters.IsClientCredentialRequest = true;
             parameters.SendCertificate = sendCertificate;
-            var handler = new ClientCredentialRequest(parameters, forceRefresh){ApiId = apiId, IsConfidentialClient = true};
+            var handler = new ClientCredentialRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters, forceRefresh)
+            {
+                ApiId = apiId,
+                IsConfidentialClient = true
+            };
             return await handler.RunAsync().ConfigureAwait(false);
         }
 
@@ -375,20 +364,27 @@ namespace Microsoft.Identity.Client
             var requestParams = CreateRequestParameters(authority, scopes, null, UserTokenCache);
             requestParams.UserAssertion = userAssertion;
             requestParams.SendCertificate = sendCertificate;
-            var handler = new OnBehalfOfRequest(requestParams){ApiId = apiId, IsConfidentialClient = true};
+            var handler = new OnBehalfOfRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams)
+            {
+                ApiId = apiId,
+                IsConfidentialClient = true
+            };
             return await handler.RunAsync().ConfigureAwait(false);
         }
 
         private async Task<AuthenticationResult> AcquireTokenByAuthorizationCodeCommonAsync(string authorizationCode,
             IEnumerable<string> scopes, Uri redirectUri, ApiEvent.ApiIds apiId, bool sendCertificate)
         {
-            Authority authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             var requestParams = CreateRequestParameters(authority, scopes, null, UserTokenCache);
             requestParams.AuthorizationCode = authorizationCode;
             requestParams.RedirectUri = redirectUri;
             requestParams.SendCertificate = sendCertificate;
-            var handler =
-                new AuthorizationCodeRequest(requestParams){ApiId = apiId, IsConfidentialClient = true};
+            var handler = new AuthorizationCodeRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams)
+            {
+                ApiId = apiId,
+                IsConfidentialClient = true
+            };
             return await handler.RunAsync().ConfigureAwait(false);
         }
 

@@ -46,17 +46,22 @@ namespace Test.MSAL.NET.Unit
     public class UnifiedCacheTests
     {
         private MyReceiver _myReceiver = new MyReceiver();
+        private IAadInstanceDiscovery _aadInstanceDiscovery;
+        private IHttpManager _httpManager;
+        private IAuthorityFactory _authorityFactory;
 
         [TestInitialize]
         public void TestInitialize()
         {
+            _httpManager = new HttpManager(new HttpClientFactory(true));
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
+
             ModuleInitializer.ForceModuleInitializationTestOnly();
             Authority.ValidatedAuthorities.Clear();
-            HttpClientFactory.ReturnHttpClientForMocks = true;
             HttpMessageHandlerFactory.ClearMockHandlers();
             Telemetry.GetInstance().RegisterReceiver(_myReceiver.OnEvents);
 
-            AadInstanceDiscovery.Instance.Cache.Clear();
             AddMockResponseForInstanceDisovery();
         }
 
@@ -121,7 +126,7 @@ namespace Test.MSAL.NET.Unit
             Assert.IsTrue(adalCacheDictionary.Count == 1);
 
             var requestContext = new RequestContext(new MsalLogger(Guid.Empty, null));
-            var users = app.UserTokenCache.GetAccountsAsync(TestConstants.AuthorityCommonTenant, false, requestContext).Result;
+            var users = app.UserTokenCache.GetAccountsAsync(_authorityFactory, _aadInstanceDiscovery, TestConstants.AuthorityCommonTenant, false, requestContext).Result;
             foreach (IAccount user in users)
             {
                 ISet<string> authorityHostAliases = new HashSet<string>();

@@ -25,6 +25,7 @@
 //
 //------------------------------------------------------------------------------
 
+using Microsoft.Identity.Core.Http;
 using Microsoft.Identity.Core.OAuth2;
 using System;
 using System.Collections.Concurrent;
@@ -34,14 +35,33 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Identity.Core.Instance
 {
-    internal class AadInstanceDiscovery
+    internal interface IAadInstanceDiscovery
     {
-        AadInstanceDiscovery(){}
+        Task<InstanceDiscoveryMetadataEntry> GetMetadataEntryAsync(
+            Uri authority, 
+            bool validateAuthority, 
+            RequestContext requestContext);
 
-        public static AadInstanceDiscovery Instance { get; } = new AadInstanceDiscovery();
+        Task<InstanceDiscoveryResponse> DoInstanceDiscoveryAndCacheAsync(
+            Uri authority, 
+            bool validateAuthority, 
+            RequestContext requestContext);
 
-        internal readonly ConcurrentDictionary<string, InstanceDiscoveryMetadataEntry> Cache =
-            new ConcurrentDictionary<string, InstanceDiscoveryMetadataEntry>();
+        // todo: this needs to be a property or we need to expose "TryGet" methods on the interface instead of exposing
+        // the concurrent dictionary directly as a field.
+        ConcurrentDictionary<string, InstanceDiscoveryMetadataEntry> Cache { get; }
+    }
+
+    internal class AadInstanceDiscovery : IAadInstanceDiscovery
+    {
+        private readonly IHttpManager _httpManager;
+
+        public AadInstanceDiscovery(IHttpManager httpManager)
+        {
+            _httpManager = httpManager;
+        }
+
+        public ConcurrentDictionary<string, InstanceDiscoveryMetadataEntry> Cache { get; } = new ConcurrentDictionary<string, InstanceDiscoveryMetadataEntry>();
 
         public async Task<InstanceDiscoveryMetadataEntry> GetMetadataEntryAsync(Uri authority, bool validateAuthority,
             RequestContext requestContext)
@@ -56,7 +76,7 @@ namespace Microsoft.Identity.Core.Instance
             return entry;
         }
 
-        public static string BuildAuthorizeEndpoint(string host, string tenant)
+        private static string BuildAuthorizeEndpoint(string host, string tenant)
         {
             return string.Format(CultureInfo.InvariantCulture, "https://{0}/{1}/oauth2/v2.0/authorize", host, tenant);
         }
@@ -66,12 +86,12 @@ namespace Microsoft.Identity.Core.Instance
             return uri.AbsolutePath.Split('/')[1];
         }
 
-        public static string BuildInstanceDiscoveryEndpoint(string host)
+        private static string BuildInstanceDiscoveryEndpoint(string host)
         {
             return string.Format(CultureInfo.InvariantCulture, "https://{0}/common/discovery/instance", host);
         }
 
-        internal async Task<InstanceDiscoveryResponse> 
+        public async Task<InstanceDiscoveryResponse> 
             DoInstanceDiscoveryAndCacheAsync(Uri authority, bool validateAuthority, RequestContext requestContext)
         {
             InstanceDiscoveryResponse discoveryResponse =
@@ -86,9 +106,10 @@ namespace Microsoft.Identity.Core.Instance
 
             return discoveryResponse;
         }
-        private static async Task<InstanceDiscoveryResponse> SendInstanceDiscoveryRequestAsync(Uri authority, RequestContext requestContext)
+
+        private async Task<InstanceDiscoveryResponse> SendInstanceDiscoveryRequestAsync(Uri authority, RequestContext requestContext)
         {
-            OAuth2Client client = new OAuth2Client();
+            OAuth2Client client = new OAuth2Client(_httpManager);
             client.AddQueryParameter("api-version", "1.1");
             client.AddQueryParameter("authorization_endpoint", BuildAuthorizeEndpoint(authority.Host, GetTenant(authority)));
 

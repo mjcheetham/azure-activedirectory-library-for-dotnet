@@ -26,16 +26,14 @@
 //------------------------------------------------------------------------------
 
 using System;
-using System.Globalization;
+using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Identity.Core;
+using Microsoft.Identity.Core.Http;
+using Microsoft.Identity.Core.WsTrust;
 using Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Instance;
 using Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.OAuth2;
-using Microsoft.Identity.Core.WsTrust;
-using Microsoft.Identity.Core;
-using System.Diagnostics;
-using Microsoft.Identity.Core.Helpers;
-using Microsoft.Identity.Core.Realm;
 
 namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Flows
 {
@@ -44,57 +42,56 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Flows
     /// </summary>
     internal class AcquireTokenIWAHandler : AcquireTokenHandlerBase
     {
-        private IntegratedWindowsAuthInput iwaInput;
-        private UserAssertion userAssertion;
-        private CommonNonInteractiveHandler commonNonInteractiveHandler;
+        private readonly IHttpManager _httpManager;
 
-        public AcquireTokenIWAHandler(RequestData requestData, IntegratedWindowsAuthInput iwaInput)
+        private IntegratedWindowsAuthInput _iwaInput;
+        private UserAssertion _userAssertion;
+        private CommonNonInteractiveHandler _commonNonInteractiveHandler;
+
+        public AcquireTokenIWAHandler(IHttpManager httpManager, RequestData requestData, IntegratedWindowsAuthInput iwaInput)
             : base(requestData)
         {
-            if (iwaInput == null)
-            {
-                throw new ArgumentNullException(nameof(iwaInput));
-            }
+            _httpManager = httpManager;
+            _iwaInput = iwaInput ?? throw new ArgumentNullException(nameof(iwaInput));
 
             // We enable ADFS support only when it makes sense to do so
             if (requestData.Authenticator.AuthorityType == AuthorityType.ADFS)
             {
-                this.SupportADFS = true;
+                SupportADFS = true;
             }
 
-            this.iwaInput = iwaInput;
-            this.DisplayableId = iwaInput.UserName;
+            DisplayableId = iwaInput.UserName;
 
-            this.commonNonInteractiveHandler = new CommonNonInteractiveHandler(RequestContext, this.iwaInput);
+            _commonNonInteractiveHandler = new CommonNonInteractiveHandler(_httpManager, RequestContext, _iwaInput);
         }
 
         protected override async Task PreRunAsync()
         {
             await base.PreRunAsync().ConfigureAwait(false);
 
-            if (string.IsNullOrWhiteSpace(this.iwaInput.UserName))
+            if (string.IsNullOrWhiteSpace(_iwaInput.UserName))
             {
-                string platformUsername = await this.commonNonInteractiveHandler.GetPlatformUserAsync()
+                string platformUsername = await _commonNonInteractiveHandler.GetPlatformUserAsync()
                     .ConfigureAwait(false);
-                this.iwaInput.UserName = platformUsername;
+                _iwaInput.UserName = platformUsername;
             }
 
-            this.DisplayableId = iwaInput.UserName;
+            DisplayableId = _iwaInput.UserName;
         }
 
         protected override async Task PreTokenRequestAsync()
         {
             await base.PreTokenRequestAsync().ConfigureAwait(false);
 
-            if (!this.SupportADFS)
+            if (!SupportADFS)
             {
-                var userRealmResponse = await this.commonNonInteractiveHandler.QueryUserRealmDataAsync(this.Authenticator.UserRealmUriPrefix)
+                var userRealmResponse = await _commonNonInteractiveHandler.QueryUserRealmDataAsync(Authenticator.UserRealmUriPrefix)
                    .ConfigureAwait(false);
 
                 if (string.Equals(userRealmResponse.AccountType, "federated", StringComparison.OrdinalIgnoreCase))
                 {
-                    WsTrustResponse wsTrustResponse = await this.commonNonInteractiveHandler.QueryWsTrustAsync(
-                         new MexParser(UserAuthType.IntegratedAuth, this.RequestContext),
+                    WsTrustResponse wsTrustResponse = await _commonNonInteractiveHandler.QueryWsTrustAsync(
+                         new MexParser(_httpManager, UserAuthType.IntegratedAuth, RequestContext),
                          userRealmResponse,
                          (cloudAudience, trustAddress, userName) =>
                          {
@@ -102,7 +99,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Flows
                          }).ConfigureAwait(false);
 
                     // We assume that if the response token type is not SAML 1.1, it is SAML 2
-                    this.userAssertion = new UserAssertion(wsTrustResponse.Token, (wsTrustResponse.TokenType == WsTrustResponse.Saml1Assertion) ? OAuthGrantType.Saml11Bearer : OAuthGrantType.Saml20Bearer);
+                    _userAssertion = new UserAssertion(wsTrustResponse.Token, (wsTrustResponse.TokenType == WsTrustResponse.Saml1Assertion) ? OAuthGrantType.Saml11Bearer : OAuthGrantType.Saml20Bearer);
                 }
                 else
                 {
@@ -113,10 +110,10 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Flows
 
         protected override void AddAditionalRequestParameters(DictionaryRequestParameters requestParameters)
         {
-            Debug.Assert(this.userAssertion != null, "Expected the user assertion to have been created by PreTokenRequestAsync");
+            Debug.Assert(_userAssertion != null, "Expected the user assertion to have been created by PreTokenRequestAsync");
 
-            requestParameters[OAuthParameter.GrantType] = this.userAssertion.AssertionType;
-            requestParameters[OAuthParameter.Assertion] = Convert.ToBase64String(Encoding.UTF8.GetBytes(this.userAssertion.Assertion));
+            requestParameters[OAuthParameter.GrantType] = _userAssertion.AssertionType;
+            requestParameters[OAuthParameter.Assertion] = Convert.ToBase64String(Encoding.UTF8.GetBytes(_userAssertion.Assertion));
 
             // To request id_token in response
             requestParameters[OAuthParameter.Scope] = OAuthValue.ScopeOpenId;

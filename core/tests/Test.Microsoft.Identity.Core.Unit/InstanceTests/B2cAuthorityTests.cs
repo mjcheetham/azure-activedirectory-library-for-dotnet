@@ -41,11 +41,18 @@ namespace Test.Microsoft.Identity.Core.Unit.InstanceTests
     [DeploymentItem("Resources\\OpenidConfiguration-MissingFields-B2C.json")]
     public class B2CAuthorityTests
     {
+        private IAadInstanceDiscovery _aadInstanceDiscovery;
+        private IHttpManager _httpManager;
+        private IAuthorityFactory _authorityFactory;
+
         [TestInitialize]
         public void TestInitialize()
         {
+            _httpManager = new HttpManager(new HttpClientFactory(true));
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
+
             Authority.ValidatedAuthorities.Clear();
-            HttpClientFactory.ReturnHttpClientForMocks = true;
             HttpMessageHandlerFactory.ClearMockHandlers();
         }
 
@@ -60,7 +67,7 @@ namespace Test.Microsoft.Identity.Core.Unit.InstanceTests
         {
             try
             {
-                Authority instance = Authority.CreateAuthority("https://login.microsoftonline.in/tfp/", false);
+                Authority instance = _authorityFactory.CreateAuthority("https://login.microsoftonline.in/tfp/", false);
                 Assert.IsNotNull(instance);
                 Assert.AreEqual(instance.AuthorityType, AuthorityType.B2C);
                 Task
@@ -81,7 +88,7 @@ namespace Test.Microsoft.Identity.Core.Unit.InstanceTests
         [TestCategory("B2CAuthorityTests")]
         public void ValidationEnabledNotSupportedTest()
         {
-            Authority instance = Authority.CreateAuthority(TestConstants.B2CAuthority, true);
+            Authority instance = _authorityFactory.CreateAuthority(TestConstants.B2CAuthority, true);
             Assert.IsNotNull(instance);
             Assert.AreEqual(instance.AuthorityType, AuthorityType.B2C);
             try
@@ -112,13 +119,13 @@ namespace Test.Microsoft.Identity.Core.Unit.InstanceTests
             const string uriCustomPort = "https://login.microsoftonline.in:444/tfp/tenant/policy";
             const string uriCustomPortTailSlash = "https://login.microsoftonline.in:444/tfp/tenant/policy/";
 
-            var authority = new B2CAuthority(uriNoPort, false);
+            var authority = new B2CAuthority(_httpManager, _aadInstanceDiscovery, uriNoPort, false);
             Assert.AreEqual(uriNoPortTailSlash, authority.CanonicalAuthority);
 
-            authority = new B2CAuthority(uriDefaultPort, false);
+            authority = new B2CAuthority(_httpManager, _aadInstanceDiscovery, uriDefaultPort, false);
             Assert.AreEqual(uriNoPortTailSlash, authority.CanonicalAuthority);
 
-            authority = new B2CAuthority(uriCustomPort, false);
+            authority = new B2CAuthority(_httpManager, _aadInstanceDiscovery, uriCustomPort, false);
             Assert.AreEqual(uriCustomPortTailSlash, authority.CanonicalAuthority);
         }
     }

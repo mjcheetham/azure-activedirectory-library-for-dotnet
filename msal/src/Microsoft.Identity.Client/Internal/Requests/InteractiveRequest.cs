@@ -32,6 +32,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Helpers;
+using Microsoft.Identity.Core.Http;
+using Microsoft.Identity.Core.Instance;
 using Microsoft.Identity.Core.OAuth2;
 using Microsoft.Identity.Core.Telemetry;
 using Microsoft.Identity.Core.UI;
@@ -47,18 +49,20 @@ namespace Microsoft.Identity.Client.Internal.Requests
         private string _codeVerifier;
         private string _state;
 
-        public InteractiveRequest(AuthenticationRequestParameters authenticationRequestParameters,
+        public InteractiveRequest(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery, 
+            AuthenticationRequestParameters authenticationRequestParameters,
             IEnumerable<string> extraScopesToConsent, UIBehavior UIBehavior, IWebUI webUI)
-            : this(
+            : this(httpManager, authorityFactory, aadInstanceDiscovery,
                 authenticationRequestParameters, extraScopesToConsent, authenticationRequestParameters.Account?.Username,
                 UIBehavior, webUI)
         {
         }
 
-        public InteractiveRequest(AuthenticationRequestParameters authenticationRequestParameters,
+        public InteractiveRequest(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery, 
+            AuthenticationRequestParameters authenticationRequestParameters,
             IEnumerable<string> extraScopesToConsent, string loginHint,
             UIBehavior UIBehavior, IWebUI webUI)
-            : base(authenticationRequestParameters)
+            : base(httpManager, authorityFactory, aadInstanceDiscovery, authenticationRequestParameters)
         {
             if (!string.IsNullOrWhiteSpace(authenticationRequestParameters.RedirectUri.Fragment))
             {

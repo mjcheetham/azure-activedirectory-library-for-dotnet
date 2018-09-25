@@ -48,6 +48,13 @@ namespace Microsoft.Identity.Core.OAuth2
 
         private readonly Dictionary<string, string> _queryParameters = new Dictionary<string, string>();
 
+        private readonly IHttpManager _httpManager;
+
+        public OAuth2Client(IHttpManager httpManager)
+        {
+            _httpManager = httpManager;
+        }
+
         public void AddQueryParameter(string key, string value)
         {
             _queryParameters[key] = value;
@@ -86,11 +93,11 @@ namespace Microsoft.Identity.Core.OAuth2
             {
                 if (method == HttpMethod.Post)
                 {
-                    response = await HttpRequest.SendPostAsync(endpointUri, _headers, _bodyParameters, requestContext).ConfigureAwait(false);
+                    response = await _httpManager.SendPostAsync(endpointUri, _headers, _bodyParameters, requestContext).ConfigureAwait(false);
                 }
                 else
                 {
-                    response = await HttpRequest.SendGetAsync(endpointUri, _headers, requestContext).ConfigureAwait(false);
+                    response = await _httpManager.SendGetAsync(endpointUri, _headers, requestContext).ConfigureAwait(false);
                 }
 
                 httpEvent.HttpResponseStatus = (int)response.StatusCode;

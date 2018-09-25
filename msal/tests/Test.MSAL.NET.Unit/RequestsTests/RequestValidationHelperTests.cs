@@ -35,6 +35,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Identity.Core;
+using Microsoft.Identity.Core.Http;
 
 namespace Test.MSAL.NET.Unit.RequestsTests
 {
@@ -42,6 +43,18 @@ namespace Test.MSAL.NET.Unit.RequestsTests
     public class RequestValidationHelperTests
     {
         public const uint JwtToAadLifetimeInSeconds = 60 * 10; // Ten minutes
+
+        private IAadInstanceDiscovery _aadInstanceDiscovery;
+        private IHttpManager _httpManager;
+        private IAuthorityFactory _authorityFactory;
+
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            _httpManager = new HttpManager(new HttpClientFactory(true));
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
+        }
 
         [TestMethod]
         [Description("Test for client assertion with mismatched parameters in Request Validator.")]
@@ -59,7 +72,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
             var parameters = new AuthenticationRequestParameters();
             parameters.ClientCredential = credential;
             parameters.SendCertificate = false;
-            parameters.Authority = Authority.CreateAuthority(TestConstants.AuthorityCommonTenant, false);
+            parameters.Authority = _authorityFactory.CreateAuthority(TestConstants.AuthorityCommonTenant, false);
             parameters.Authority.SelfSignedJwtAudience = Audience1;
 
             //Validate cached client assertion with parameters
@@ -104,7 +117,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
             var parameters = new AuthenticationRequestParameters();
             parameters.ClientCredential = credential;
             parameters.SendCertificate = false;
-            parameters.Authority = Authority.CreateAuthority(TestConstants.AuthorityCommonTenant, false);
+            parameters.Authority = _authorityFactory.CreateAuthority(TestConstants.AuthorityCommonTenant, false);
             parameters.Authority.SelfSignedJwtAudience = "Audience1";
 
             //Validate cached client assertion with expiration time

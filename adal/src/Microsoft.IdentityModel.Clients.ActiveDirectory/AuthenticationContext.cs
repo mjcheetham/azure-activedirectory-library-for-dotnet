@@ -29,6 +29,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Cache;
+using Microsoft.Identity.Core.Http;
 using Microsoft.Identity.Core.UI;
 using Microsoft.IdentityModel.Clients.ActiveDirectory.Internal;
 using Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.ClientCreds;
@@ -56,6 +57,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
         }
 
         internal Authenticator Authenticator;
+        private readonly IHttpManager _httpManager;
 
         /// <summary>
         /// Constructor to create the context with the address of the authority.
@@ -108,8 +110,9 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
         {
             // If authorityType is not provided (via first constructor), we validate by default (except for ASG and Office tenants).
             this.Authenticator = new Authenticator(authority, (validateAuthority != AuthorityValidationType.False));
-
             this.TokenCache = tokenCache;
+
+            _httpManager = new HttpManager(new HttpClientFactory());
         }
 
         /// <summary>
@@ -457,7 +460,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
                 ExtendedLifeTimeEnabled = this.ExtendedLifeTimeEnabled
             };
 
-            var handler = new AcquireTokenUsernamePasswordHandler(requestData, upInput);
+            var handler = new AcquireTokenUsernamePasswordHandler(_httpManager, requestData, upInput);
             return await handler.RunAsync().ConfigureAwait(false);
         }
 
@@ -475,7 +478,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
                 ExtendedLifeTimeEnabled = this.ExtendedLifeTimeEnabled
             };
 
-            var handler = new AcquireTokenIWAHandler(requestData, iwaInput);
+            var handler = new AcquireTokenIWAHandler(_httpManager, requestData, iwaInput);
             return await handler.RunAsync().ConfigureAwait(false);
         }
 

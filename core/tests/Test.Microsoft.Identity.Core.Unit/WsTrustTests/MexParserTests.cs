@@ -44,13 +44,16 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
     [DeploymentItem(@"Resources\TestMex2005.xml")]
     public class MexParserTests
     {
-        RequestContext requestContext;
+        private IHttpManager _httpManager;
+        private RequestContext _requestContext;
 
         [TestInitialize]
         public void TestInitialize()
         {
+            _httpManager = new HttpManager(new HttpClientFactory(false));
+
             CoreExceptionFactory.Instance = new TestExceptionFactory();
-            requestContext = new RequestContext(new TestLogger(Guid.NewGuid()));
+            _requestContext = new RequestContext(new TestLogger(Guid.NewGuid()));
         }
 
         [TestMethod]
@@ -66,8 +69,10 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
             }
             Assert.IsNotNull(mexDocument);
 
+            var httpManager = new HttpManager(new HttpClientFactory());
+
             // Act
-            MexParser mexParser = new MexParser(UserAuthType.IntegratedAuth, requestContext);
+            MexParser mexParser = new MexParser(httpManager, UserAuthType.IntegratedAuth, _requestContext);
             WsTrustAddress wsTrustAddress = mexParser.ExtractWsTrustAddressFromMex(mexDocument);
 
             // Assert
@@ -75,7 +80,7 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
             Assert.AreEqual(wsTrustAddress.Version, WsTrustVersion.WsTrust2005);
 
             // Act
-            mexParser = new MexParser(UserAuthType.UsernamePassword, requestContext);
+            mexParser = new MexParser(httpManager, UserAuthType.UsernamePassword, _requestContext);
             wsTrustAddress = mexParser.ExtractWsTrustAddressFromMex(mexDocument);
 
             // Assert
@@ -87,7 +92,7 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
         [Description("Mex endpoint fails to resolve")]
         public async Task MexEndpointFailsToResolveTestAsync()
         {
-            HttpClientFactory.ReturnHttpClientForMocks = true;
+            _httpManager = new HttpManager(new HttpClientFactory(true));
             HttpMessageHandlerFactory.ClearMockHandlers();
             HttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler()
             {
@@ -98,9 +103,11 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
                 }
             });
 
+            var httpManager = new HttpManager(new HttpClientFactory());
+
             try
             {
-                MexParser mexParser = new MexParser(UserAuthType.IntegratedAuth, requestContext);
+                MexParser mexParser = new MexParser(httpManager, UserAuthType.IntegratedAuth, _requestContext);
                 await mexParser.FetchWsTrustAddressFromMexAsync("http://somehost");
                 Assert.Fail("We expect an exception to be thrown here");
             }
@@ -115,7 +122,7 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
         [Description("Mex endpoint fails to parse")]
         public async Task MexEndpointFailsToParseTestAsync()
         {
-            HttpClientFactory.ReturnHttpClientForMocks = true;
+            _httpManager = new HttpManager(new HttpClientFactory(true));
             HttpMessageHandlerFactory.ClearMockHandlers();
             HttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler()
             {
@@ -125,10 +132,13 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
                     Content = new StringContent("malformed, non-xml content")
                 }
             });
+
+            var httpManager = new HttpManager(new HttpClientFactory());
+
             var requestContext = new RequestContext(new TestLogger(Guid.NewGuid(), null));
             try
             {
-                MexParser mexParser = new MexParser(UserAuthType.IntegratedAuth, requestContext);
+                MexParser mexParser = new MexParser(httpManager, UserAuthType.IntegratedAuth, requestContext);
                 await mexParser.FetchWsTrustAddressFromMexAsync("http://somehost");
                 Assert.Fail("We expect an exception to be thrown here");
             }

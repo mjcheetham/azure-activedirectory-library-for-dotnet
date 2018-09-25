@@ -27,14 +27,17 @@
 
 using System;
 using Microsoft.Identity.Core;
+using Microsoft.Identity.Core.Http;
+using Microsoft.Identity.Core.Instance;
 using Microsoft.Identity.Core.OAuth2;
 
 namespace Microsoft.Identity.Client.Internal.Requests
 {
     internal class AuthorizationCodeRequest : RequestBase
     {
-        public AuthorizationCodeRequest(AuthenticationRequestParameters authenticationRequestParameters)
-            : base(authenticationRequestParameters)
+        public AuthorizationCodeRequest(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery, 
+            AuthenticationRequestParameters authenticationRequestParameters)
+            : base(httpManager, authorityFactory, aadInstanceDiscovery, authenticationRequestParameters)
         {
             if (string.IsNullOrWhiteSpace(authenticationRequestParameters.AuthorizationCode))
             {

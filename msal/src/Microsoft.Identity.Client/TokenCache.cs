@@ -125,9 +125,10 @@ namespace Microsoft.Identity.Client
         }
 
         internal Tuple<MsalAccessTokenCacheItem, MsalIdTokenCacheItem> SaveAccessAndRefreshToken
-            (AuthenticationRequestParameters requestParams, MsalTokenResponse response)
+            (IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery, 
+            AuthenticationRequestParameters requestParams, MsalTokenResponse response)
         {
-            var tenantId = Authority.CreateAuthority(requestParams.TenantUpdatedCanonicalAuthority, false)
+            var tenantId = authorityFactory.CreateAuthority(requestParams.TenantUpdatedCanonicalAuthority, false)
                 .GetTenantId();
 
             IdToken idToken = IdToken.Parse(response.IdToken);
@@ -136,7 +137,7 @@ namespace Microsoft.Identity.Client
             //It will be set to "preferred_username not in idtoken" 
             var preferredUsername = !string.IsNullOrWhiteSpace(idToken?.PreferredUsername)? idToken.PreferredUsername : NullPreferredUsernameDisplayLabel;
 
-            var instanceDiscoveryMetadataEntry = GetCachedAuthorityMetaData(requestParams.TenantUpdatedCanonicalAuthority);
+            var instanceDiscoveryMetadataEntry = GetCachedAuthorityMetaData(authorityFactory, aadInstanceDiscovery, requestParams.TenantUpdatedCanonicalAuthority);
 
             var environmentAliases = GetEnvironmentAliases(requestParams.TenantUpdatedCanonicalAuthority,
                 instanceDiscoveryMetadataEntry);
@@ -272,7 +273,8 @@ namespace Microsoft.Identity.Client
             }
         }
 
-        internal async Task<MsalAccessTokenCacheItem> FindAccessTokenAsync(AuthenticationRequestParameters requestParams)
+        internal async Task<MsalAccessTokenCacheItem> FindAccessTokenAsync(
+            IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery, AuthenticationRequestParameters requestParams)
         {
             using (CoreTelemetryService.CreateTelemetryHelper(requestParams.RequestContext.TelemetryRequestId,
                 new CacheEvent(CacheEvent.TokenCacheLookup) { TokenType = CacheEvent.TokenTypes.AT }))
@@ -282,7 +284,8 @@ namespace Microsoft.Identity.Client
 
                 if (requestParams.Authority != null)
                 {
-                    var instanceDiscoveryMetadataEntry = await GetCachedOrDiscoverAuthorityMetaDataAsync(requestParams.Authority.CanonicalAuthority,
+                    var instanceDiscoveryMetadataEntry = await GetCachedOrDiscoverAuthorityMetaDataAsync(
+                        authorityFactory, aadInstanceDiscovery, requestParams.Authority.CanonicalAuthority,
                         requestParams.ValidateAuthority, requestParams.RequestContext).ConfigureAwait(false);
 
                     environmentAliases.UnionWith
@@ -441,23 +444,28 @@ namespace Microsoft.Identity.Client
             }
         }
 
-        internal async Task<MsalRefreshTokenCacheItem> FindRefreshTokenAsync(AuthenticationRequestParameters requestParams)
+        internal async Task<MsalRefreshTokenCacheItem> FindRefreshTokenAsync(IAuthorityFactory authorityFactory,
+            IAadInstanceDiscovery aadInstanceDiscovery, AuthenticationRequestParameters requestParams)
         {
             using (CoreTelemetryService.CreateTelemetryHelper(requestParams.RequestContext.TelemetryRequestId,
                 new CacheEvent(CacheEvent.TokenCacheLookup) { TokenType = CacheEvent.TokenTypes.RT }))
             {
-                return await FindRefreshTokenCommonAsync(requestParams).ConfigureAwait(false);
+                return await FindRefreshTokenCommonAsync(authorityFactory, aadInstanceDiscovery, requestParams).ConfigureAwait(false);
             }
         }
 
-        private async Task<MsalRefreshTokenCacheItem> FindRefreshTokenCommonAsync(AuthenticationRequestParameters requestParam)
+        private async Task<MsalRefreshTokenCacheItem> FindRefreshTokenCommonAsync(
+            IAuthorityFactory authorityFactory, 
+            IAadInstanceDiscovery aadInstanceDiscovery,
+            AuthenticationRequestParameters requestParam)
         {
             if (requestParam.Authority == null)
             {
                 return null;
             }
 
-            var instanceDiscoveryMetadataEntry = await GetCachedOrDiscoverAuthorityMetaDataAsync(requestParam.Authority.CanonicalAuthority,
+            var instanceDiscoveryMetadataEntry = await GetCachedOrDiscoverAuthorityMetaDataAsync(
+                authorityFactory, aadInstanceDiscovery, requestParam.Authority.CanonicalAuthority,
                 requestParam.ValidateAuthority, requestParam.RequestContext).ConfigureAwait(false);
 
             var environmentAliases = GetEnvironmentAliases(requestParam.Authority.CanonicalAuthority,
@@ -673,27 +681,27 @@ namespace Microsoft.Identity.Client
         }
 
         private async Task<InstanceDiscoveryMetadataEntry> GetCachedOrDiscoverAuthorityMetaDataAsync
-            (string authority, bool validateAuthority, RequestContext requestContext)
+            (IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery, string authority, bool validateAuthority, RequestContext requestContext)
         {
             InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata = null;
 
-            var authorityType = Authority.GetAuthorityType(authority);
+            var authorityType = authorityFactory.GetAuthorityType(authority);
             if (authorityType == Core.Instance.AuthorityType.Aad || authorityType == Core.Instance.AuthorityType.B2C)
             {
-                instanceDiscoveryMetadata = await AadInstanceDiscovery.Instance.GetMetadataEntryAsync
+                instanceDiscoveryMetadata = await aadInstanceDiscovery.GetMetadataEntryAsync
                     (new Uri(authority), validateAuthority, requestContext).ConfigureAwait(false);
             }
             return instanceDiscoveryMetadata;
         }
          
-        private InstanceDiscoveryMetadataEntry GetCachedAuthorityMetaData(string authority)
+        private InstanceDiscoveryMetadataEntry GetCachedAuthorityMetaData(IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery, string authority)
         {
             InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata = null;
 
-            var authorityType = Authority.GetAuthorityType(authority);
+            var authorityType = authorityFactory.GetAuthorityType(authority);
             if (authorityType == Core.Instance.AuthorityType.Aad || authorityType == Core.Instance.AuthorityType.B2C)
             {
-                AadInstanceDiscovery.Instance.Cache.TryGetValue
+                aadInstanceDiscovery.Cache.TryGetValue
                     (new Uri(authority).Host, out instanceDiscoveryMetadata);
             }
             return instanceDiscoveryMetadata;
@@ -729,10 +737,11 @@ namespace Microsoft.Identity.Client
             return preferredEnvironmentHost;
         }
 
-        internal async Task<IEnumerable<IAccount>> GetAccountsAsync(string authority, bool validateAuthority, RequestContext requestContext)
+        internal async Task<IEnumerable<IAccount>> GetAccountsAsync(IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery, 
+            string authority, bool validateAuthority, RequestContext requestContext)
         {
             var instanceDiscoveryMetadataEntry = 
-                await GetCachedOrDiscoverAuthorityMetaDataAsync(authority, validateAuthority, requestContext).ConfigureAwait(false);
+                await GetCachedOrDiscoverAuthorityMetaDataAsync(authorityFactory, aadInstanceDiscovery, authority, validateAuthority, requestContext).ConfigureAwait(false);
 
             var environmentAliases = GetEnvironmentAliases(authority, instanceDiscoveryMetadataEntry);
 
@@ -904,10 +913,11 @@ namespace Microsoft.Identity.Client
             }
         }
 
-        internal async Task RemoveAsync(string authority, bool validateAuthority, IAccount account, RequestContext requestContext)
+        internal async Task RemoveAsync(IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery,
+            string authority, bool validateAuthority, IAccount account, RequestContext requestContext)
         {
             var instanceDiscoveryMetadataEntry =
-                await GetCachedOrDiscoverAuthorityMetaDataAsync(authority, validateAuthority, requestContext).ConfigureAwait(false);
+                await GetCachedOrDiscoverAuthorityMetaDataAsync(authorityFactory, aadInstanceDiscovery, authority, validateAuthority, requestContext).ConfigureAwait(false);
 
             var environmentAliases = GetEnvironmentAliases(authority, instanceDiscoveryMetadataEntry);
 

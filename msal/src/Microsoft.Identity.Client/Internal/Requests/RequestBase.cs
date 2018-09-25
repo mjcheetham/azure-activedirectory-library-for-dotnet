@@ -33,6 +33,7 @@ using System.Threading.Tasks;
 using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Cache;
 using Microsoft.Identity.Core.Helpers;
+using Microsoft.Identity.Core.Http;
 using Microsoft.Identity.Core.Instance;
 using Microsoft.Identity.Core.OAuth2;
 using Microsoft.Identity.Core.Telemetry;
@@ -68,8 +69,20 @@ namespace Microsoft.Identity.Client.Internal.Requests
 
         protected bool StoreToCache { get; set; }
 
-        protected RequestBase(AuthenticationRequestParameters authenticationRequestParameters)
+        protected IHttpManager HttpManager { get; }
+        protected IAuthorityFactory AuthorityFactory { get; }
+        protected IAadInstanceDiscovery AadInstanceDiscovery { get; }
+
+        protected RequestBase(
+            IHttpManager httpManager, 
+            IAuthorityFactory authorityFactory, 
+            IAadInstanceDiscovery aadInstanceDiscovery,
+            AuthenticationRequestParameters authenticationRequestParameters)
         {
+            HttpManager = httpManager;
+            AuthorityFactory = authorityFactory;
+            AadInstanceDiscovery = aadInstanceDiscovery;
+
             TokenCache = authenticationRequestParameters.TokenCache;
             // Log contains Pii 
             authenticationRequestParameters.RequestContext.Logger.InfoPii(string.Format(CultureInfo.InvariantCulture,
@@ -233,7 +246,7 @@ namespace Microsoft.Identity.Client.Internal.Requests
                 AuthenticationRequestParameters.RequestContext.Logger.Info(msg);
                 AuthenticationRequestParameters.RequestContext.Logger.InfoPii(msg);
 
-                var tuple = TokenCache.SaveAccessAndRefreshToken(AuthenticationRequestParameters, Response);
+                var tuple = TokenCache.SaveAccessAndRefreshToken(AuthorityFactory, AadInstanceDiscovery, AuthenticationRequestParameters, Response);
                 MsalAccessTokenItem = tuple.Item1;
                 MsalIdTokenItem = tuple.Item2;
             }
@@ -286,7 +299,7 @@ namespace Microsoft.Identity.Client.Internal.Requests
 
         protected virtual async Task SendTokenRequestAsync()
         {
-            OAuth2Client client = new OAuth2Client();
+            OAuth2Client client = new OAuth2Client(HttpManager);
             client.AddBodyParameter(OAuth2Parameter.ClientId, AuthenticationRequestParameters.ClientId);
             client.AddBodyParameter(OAuth2Parameter.ClientInfo, "1");
             foreach (var entry in AuthenticationRequestParameters.ToParameters())
@@ -316,7 +329,6 @@ namespace Microsoft.Identity.Client.Internal.Requests
                 const string msg = "ScopeSet was missing from the token response, so using developer provided scopes in the result";
                 AuthenticationRequestParameters.RequestContext.Logger.Info(msg);
                 AuthenticationRequestParameters.RequestContext.Logger.InfoPii(msg);
-
             }
         }
 

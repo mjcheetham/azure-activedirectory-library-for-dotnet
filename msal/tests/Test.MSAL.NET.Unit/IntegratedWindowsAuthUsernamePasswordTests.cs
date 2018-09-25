@@ -46,22 +46,27 @@ namespace Test.MSAL.NET.Unit
     [TestClass]
     public class IntegratedWindowsAuthAndUsernamePasswordTests
     {
-        TokenCache cache;
+        TokenCache _cache;
         private MyReceiver _myReceiver = new MyReceiver();
-        SecureString secureString;
+        SecureString _secureString;
+        private IAadInstanceDiscovery _aadInstanceDiscovery;
+        private IHttpManager _httpManager;
+        private IAuthorityFactory _authorityFactory;
 
         [TestInitialize]
         public void TestInitialize()
         {
             ModuleInitializer.ForceModuleInitializationTestOnly();
 
-            cache = new TokenCache();
+            _httpManager = new HttpManager(new HttpClientFactory(true));
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
+
+            _cache = new TokenCache();
             Authority.ValidatedAuthorities.Clear();
-            HttpClientFactory.ReturnHttpClientForMocks = true;
             HttpMessageHandlerFactory.ClearMockHandlers();
             Telemetry.GetInstance().RegisterReceiver(_myReceiver.OnEvents);
 
-            AadInstanceDiscovery.Instance.Cache.Clear();
             AddMockResponseForInstanceDisovery();
             CreateSecureString();
         }
@@ -75,11 +80,11 @@ namespace Test.MSAL.NET.Unit
 
         internal void CreateSecureString()
         {
-            secureString = null;
+            _secureString = null;
             SecureString str = new SecureString();
             str.AppendChar('x');
             str.MakeReadOnly();
-            secureString = str;
+            _secureString = str;
         }
 
         internal void AddMockResponseForFederatedAccounts()
@@ -175,8 +180,8 @@ namespace Test.MSAL.NET.Unit
         [TestCleanup]
         public void TestCleanup()
         {
-            cache.tokenCacheAccessor.AccessTokenCacheDictionary.Clear();
-            cache.tokenCacheAccessor.RefreshTokenCacheDictionary.Clear();
+            _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Clear();
+            _cache.tokenCacheAccessor.RefreshTokenCacheDictionary.Clear();
         }
 
         [TestMethod]
@@ -268,7 +273,7 @@ namespace Test.MSAL.NET.Unit
 
             PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId);
 
-            AuthenticationResult result = await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, secureString).ConfigureAwait(false);
+            AuthenticationResult result = await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, _secureString).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.AreEqual("some-access-token", result.AccessToken);
@@ -321,22 +326,22 @@ namespace Test.MSAL.NET.Unit
                 }
             });
 
-            cache.ClientId = TestConstants.ClientId;
+            _cache.ClientId = TestConstants.ClientId;
             PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
             {
-                UserTokenCache = cache
+                UserTokenCache = _cache
             };
 
             // Call aquire token, Mex parser fails
             var result = AssertException.TaskThrows<MsalException>(async () =>
-                await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, secureString).ConfigureAwait(false));
+                await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, _secureString).ConfigureAwait(false));
 
             // Check exception message
             Assert.AreEqual("Parsing WS metadata exchange failed", result.Message);
             Assert.AreEqual("parsing_ws_metadata_exchange_failed", result.ErrorCode);
 
             // There should be no cached entries.
-            Assert.AreEqual(0, cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
+            Assert.AreEqual(0, _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
 
             Assert.IsTrue(HttpMessageHandlerFactory.IsMocksQueueEmpty, "All mocks should have been consumed");
         }
@@ -395,21 +400,21 @@ namespace Test.MSAL.NET.Unit
                 }
             });
 
-            cache.ClientId = TestConstants.ClientId;
+            _cache.ClientId = TestConstants.ClientId;
             PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
             {
-                UserTokenCache = cache
+                UserTokenCache = _cache
             };
 
             // Call aquire token, endpoint not found
             var result = AssertException.TaskThrows<MsalException>(async () =>
-                await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, secureString).ConfigureAwait(false));
+                await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, _secureString).ConfigureAwait(false));
 
             // Check exception message
             Assert.AreEqual(CoreErrorCodes.ParsingWsTrustResponseFailed, result.ErrorCode);
 
             // There should be no cached entries.
-            Assert.AreEqual(0, cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
+            Assert.AreEqual(0, _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
 
             Assert.IsTrue(HttpMessageHandlerFactory.IsMocksQueueEmpty, "All mocks should have been consumed");
         }
@@ -456,21 +461,21 @@ namespace Test.MSAL.NET.Unit
                 }
             });
 
-            cache.ClientId = TestConstants.ClientId;
+            _cache.ClientId = TestConstants.ClientId;
             PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
             {
-                UserTokenCache = cache
+                UserTokenCache = _cache
             };
 
             // Call aquire token
             var result = AssertException.TaskThrows<MsalException>(async () =>
-                await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, secureString).ConfigureAwait(false));
+                await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, _secureString).ConfigureAwait(false));
 
             // Check inner exception
             Assert.AreEqual("Response status code does not indicate success: 404 (NotFound).", result.Message);
 
             // There should be no cached entries.
-            Assert.AreEqual(0, cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
+            Assert.AreEqual(0, _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
 
             Assert.IsTrue(HttpMessageHandlerFactory.IsMocksQueueEmpty, "All mocks should have been consumed");
         }
@@ -530,10 +535,10 @@ namespace Test.MSAL.NET.Unit
                 }
             });
 
-            cache.ClientId = TestConstants.ClientId;
+            _cache.ClientId = TestConstants.ClientId;
             PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
             {
-                UserTokenCache = cache
+                UserTokenCache = _cache
             };
 
             SecureString str = null;
@@ -546,7 +551,7 @@ namespace Test.MSAL.NET.Unit
             Assert.AreEqual(CoreErrorCodes.ParsingWsTrustResponseFailed, result.ErrorCode);
 
             // There should be no cached entries.
-            Assert.AreEqual(0, cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
+            Assert.AreEqual(0, _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
 
             Assert.IsTrue(HttpMessageHandlerFactory.IsMocksQueueEmpty, "All mocks should have been consumed");
         }
@@ -614,21 +619,21 @@ namespace Test.MSAL.NET.Unit
                 ResponseMessage = MockHelpers.CreateInvalidRequestTokenResponseMessage()
             });
 
-            cache.ClientId = TestConstants.ClientId;
+            _cache.ClientId = TestConstants.ClientId;
             PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
             {
-                UserTokenCache = cache
+                UserTokenCache = _cache
             };
 
             // Call acquire token
             var result = AssertException.TaskThrows<MsalException>(async () =>
-                await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, secureString).ConfigureAwait(false));
+                await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, _secureString).ConfigureAwait(false));
 
             // Check inner exception
             Assert.AreEqual(CoreErrorCodes.InvalidRequest, result.ErrorCode);
 
             // There should be no cached entries.
-            Assert.AreEqual(0, cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
+            Assert.AreEqual(0, _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
 
             Assert.IsTrue(HttpMessageHandlerFactory.IsMocksQueueEmpty, "All mocks should have been consumed");
         }
@@ -666,21 +671,21 @@ namespace Test.MSAL.NET.Unit
 
             });
 
-            cache.ClientId = TestConstants.ClientId;
+            _cache.ClientId = TestConstants.ClientId;
             PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
             {
-                UserTokenCache = cache
+                UserTokenCache = _cache
             };
 
             // Call acquire token
             var result = AssertException.TaskThrows<MsalException>(async () =>
-                await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, secureString).ConfigureAwait(false));
+                await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, _secureString).ConfigureAwait(false));
 
             // Check inner exception
             Assert.AreEqual(CoreErrorCodes.InvalidRequest, result.ErrorCode);
 
             // There should be no cached entries.
-            Assert.AreEqual(0, cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
+            Assert.AreEqual(0, _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
 
             Assert.IsTrue(HttpMessageHandlerFactory.IsMocksQueueEmpty, "All mocks should have been consumed");
         }
@@ -699,13 +704,13 @@ namespace Test.MSAL.NET.Unit
                 {
                     {"grant_type", "password"},
                     {"username", TestConstants.User.Username},
-                    {"password", secureString}
+                    {"password", _secureString}
                 }
             });
 
             PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId);
 
-            AuthenticationResult result = await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, secureString).ConfigureAwait(false);
+            AuthenticationResult result = await app.AcquireTokenByUsernamePasswordAsync(TestConstants.Scope, TestConstants.User.Username, _secureString).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.AreEqual("some-access-token", result.AccessToken);
@@ -721,10 +726,10 @@ namespace Test.MSAL.NET.Unit
         {
             AddMockResponseforManagedAccounts();
 
-            cache.ClientId = TestConstants.ClientId;
+            _cache.ClientId = TestConstants.ClientId;
             PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
             {
-                UserTokenCache = cache
+                UserTokenCache = _cache
             };
 
             SecureString str = null;
@@ -737,7 +742,7 @@ namespace Test.MSAL.NET.Unit
             Assert.AreEqual(MsalError.PasswordRequiredForManagedUserError, result.ErrorCode);
 
             // There should be no cached entries.
-            Assert.AreEqual(0, cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
+            Assert.AreEqual(0, _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
 
             Assert.IsTrue(HttpMessageHandlerFactory.IsMocksQueueEmpty, "All mocks should have been consumed");
         }
@@ -760,14 +765,14 @@ namespace Test.MSAL.NET.Unit
                 {
                     {"grant_type", "password"},
                     {"username", TestConstants.User.Username},
-                    {"password", secureString}
+                    {"password", _secureString}
                 }
             });
 
-            cache.ClientId = TestConstants.ClientId;
+            _cache.ClientId = TestConstants.ClientId;
             PublicClientApplication app = new PublicClientApplication(TestConstants.ClientId)
             {
-                UserTokenCache = cache
+                UserTokenCache = _cache
             };
 
             // Call acquire token
@@ -778,7 +783,7 @@ namespace Test.MSAL.NET.Unit
             Assert.AreEqual(CoreErrorCodes.InvalidGrantError, result.ErrorCode);
 
             // There should be no cached entries.
-            Assert.AreEqual(0, cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
+            Assert.AreEqual(0, _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
 
             Assert.IsTrue(HttpMessageHandlerFactory.IsMocksQueueEmpty, "All mocks should have been consumed");
         }

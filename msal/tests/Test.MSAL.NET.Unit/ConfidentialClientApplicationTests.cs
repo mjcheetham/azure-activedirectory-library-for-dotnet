@@ -53,16 +53,21 @@ namespace Test.MSAL.NET.Unit
     {
         private readonly MyReceiver _myReceiver = new MyReceiver();
         private byte[] serializedCache = null;
+        private IAadInstanceDiscovery _aadInstanceDiscovery;
+        private IHttpManager _httpManager;
+        private IAuthorityFactory _authorityFactory;
 
         [TestInitialize]
         public void TestInitialize()
         {
+            _httpManager = new HttpManager(new HttpClientFactory(true));
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
+
             Authority.ValidatedAuthorities.Clear();
-            HttpClientFactory.ReturnHttpClientForMocks = true;
             HttpMessageHandlerFactory.ClearMockHandlers();
             Telemetry.GetInstance().RegisterReceiver(_myReceiver.OnEvents);
         
-            AadInstanceDiscovery.Instance.Cache.Clear();
             AddMockResponseForInstanceDisovery();
         }
 
@@ -549,7 +554,7 @@ namespace Test.MSAL.NET.Unit
             var cache = new TokenCache();
             TokenCacheHelper.PopulateCacheForClientCredential(cache.tokenCacheAccessor);
 
-            var authority = Authority.CreateAuthority(TestConstants.AuthorityTestTenant, false).CanonicalAuthority;
+            var authority = _authorityFactory.CreateAuthority(TestConstants.AuthorityTestTenant, false).CanonicalAuthority;
             var app = new ConfidentialClientApplication(TestConstants.ClientId, authority,
                 TestConstants.RedirectUri, new ClientCredential(TestConstants.ClientSecret),
                 null, cache)
@@ -583,7 +588,7 @@ namespace Test.MSAL.NET.Unit
             var cache = new TokenCache();
             TokenCacheHelper.PopulateCache(cache.tokenCacheAccessor);
 
-            var authority = Authority.CreateAuthority(TestConstants.AuthorityTestTenant, false).CanonicalAuthority;
+            var authority = _authorityFactory.CreateAuthority(TestConstants.AuthorityTestTenant, false).CanonicalAuthority;
             var app = new ConfidentialClientApplication(TestConstants.ClientId, authority,
                 TestConstants.RedirectUri, new ClientCredential(TestConstants.ClientSecret),
                 null, cache)

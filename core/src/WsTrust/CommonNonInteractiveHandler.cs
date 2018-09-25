@@ -26,6 +26,7 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.Identity.Core.Helpers;
+using Microsoft.Identity.Core.Http;
 using Microsoft.Identity.Core.Realm;
 using System;
 using System.Globalization;
@@ -37,13 +38,15 @@ namespace Microsoft.Identity.Core.WsTrust
 {
     internal class CommonNonInteractiveHandler
     {
-        private readonly RequestContext requestContext;
-        private readonly IUsernameInput usernameInput;
+        private readonly RequestContext _requestContext;
+        private readonly IUsernameInput _usernameInput;
+        private readonly IHttpManager _httpManager;
 
-        public CommonNonInteractiveHandler(RequestContext requestContext, IUsernameInput usernameInput)
+        public CommonNonInteractiveHandler(IHttpManager httpManager, RequestContext requestContext, IUsernameInput usernameInput)
         {
-            this.requestContext = requestContext;
-            this.usernameInput = usernameInput;
+            _requestContext = requestContext;
+            _usernameInput = usernameInput;
+            _httpManager = httpManager;
         }
 
         /// <summary>
@@ -51,7 +54,7 @@ namespace Microsoft.Identity.Core.WsTrust
         /// </summary>
         public async Task<string> GetPlatformUserAsync()
         {
-            var logger = this.requestContext.Logger;
+            var logger = _requestContext.Logger;
             string platformUsername = await CorePlatformInformationBase.Instance.GetUserPrincipalNameAsync().ConfigureAwait(false);
             string msg;
             if (string.IsNullOrWhiteSpace(platformUsername))
@@ -92,12 +95,13 @@ namespace Microsoft.Identity.Core.WsTrust
 
         public async Task<UserRealmDiscoveryResponse> QueryUserRealmDataAsync(string userRealmUriPrefix)
         {
-            var logger = this.requestContext.Logger;
+            var logger = _requestContext.Logger;
 
             var userRealmResponse = await UserRealmDiscoveryResponse.CreateByDiscoveryAsync(
+                _httpManager,
                 userRealmUriPrefix,
-                usernameInput.UserName,
-                requestContext).ConfigureAwait(false);
+                _usernameInput.UserName,
+                _requestContext).ConfigureAwait(false);
 
             if (userRealmResponse == null)
             {
@@ -107,7 +111,7 @@ namespace Microsoft.Identity.Core.WsTrust
             }
 
             logger.InfoPii(string.Format(CultureInfo.CurrentCulture,
-                " User with user name '{0}' detected as '{1}'", usernameInput.UserName,
+                " User with user name '{0}' detected as '{1}'", _usernameInput.UserName,
                 userRealmResponse.AccountType));
 
             return userRealmResponse;
@@ -122,12 +126,13 @@ namespace Microsoft.Identity.Core.WsTrust
             StringBuilder wsTrustRequest = null;
             try
             {
-                wsTrustRequest = wsTrustMessageBuilder(cloudAudience, wsTrustAddress, this.usernameInput);
+                wsTrustRequest = wsTrustMessageBuilder(cloudAudience, wsTrustAddress, _usernameInput);
 
                 wsTrustResponse = await WsTrustRequest.SendRequestAsync(
+                    _httpManager,
                     wsTrustAddress,
                     wsTrustRequest.ToString(),
-                    this.requestContext).ConfigureAwait(false);
+                    _requestContext).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -151,8 +156,8 @@ namespace Microsoft.Identity.Core.WsTrust
 
             var msg = string.Format(CultureInfo.CurrentCulture,
                 " Token of type '{0}' acquired from WS-Trust endpoint", wsTrustResponse.TokenType);
-            this.requestContext.Logger.Info(msg);
-            this.requestContext.Logger.InfoPii(msg);
+            _requestContext.Logger.Info(msg);
+            _requestContext.Logger.InfoPii(msg);
 
             return wsTrustResponse;
         }
@@ -191,8 +196,8 @@ namespace Microsoft.Identity.Core.WsTrust
                     ex);
             }
 
-            this.requestContext.Logger.Info("Fetched and parsed MEX");
-            this.requestContext.Logger.InfoPii(
+            _requestContext.Logger.Info("Fetched and parsed MEX");
+            _requestContext.Logger.InfoPii(
                 string.Format(CultureInfo.CurrentCulture, " WS-Trust endpoint '{0}' fetched from MEX at '{1}'",
                     wsTrustAddress.Uri, userRealmResponse.FederationMetadataUrl));
 

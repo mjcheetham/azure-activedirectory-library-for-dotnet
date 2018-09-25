@@ -32,6 +32,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Helpers;
+using Microsoft.Identity.Core.Http;
+using Microsoft.Identity.Core.Instance;
 using Microsoft.Identity.Core.OAuth2;
 using Microsoft.Identity.Core.WsTrust;
 
@@ -47,8 +49,9 @@ namespace Microsoft.Identity.Client.Internal.Requests
 
         private CommonNonInteractiveHandler commonNonInteractiveHandler;
 
-        public UsernamePasswordRequest(AuthenticationRequestParameters authenticationRequestParameters, UsernamePasswordInput usernamePasswordInput)
-       : base(authenticationRequestParameters)
+        public UsernamePasswordRequest(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery,
+            AuthenticationRequestParameters authenticationRequestParameters, UsernamePasswordInput usernamePasswordInput)
+       : base(httpManager, authorityFactory, aadInstanceDiscovery, authenticationRequestParameters)
         {
             if (usernamePasswordInput == null)
             {
@@ -57,7 +60,7 @@ namespace Microsoft.Identity.Client.Internal.Requests
 
             this.usernamePasswordInput = usernamePasswordInput;
             this.commonNonInteractiveHandler = new CommonNonInteractiveHandler(
-                authenticationRequestParameters.RequestContext, usernamePasswordInput);
+                HttpManager, authenticationRequestParameters.RequestContext, usernamePasswordInput);
         }
 
         protected override async Task SendTokenRequestAsync()
@@ -79,7 +82,7 @@ namespace Microsoft.Identity.Client.Internal.Requests
                 {
 
                     WsTrustResponse wsTrustResponse = await this.commonNonInteractiveHandler.QueryWsTrustAsync(
-                        new MexParser(UserAuthType.UsernamePassword, this.AuthenticationRequestParameters.RequestContext),
+                        new MexParser(HttpManager, UserAuthType.UsernamePassword, this.AuthenticationRequestParameters.RequestContext),
                         userRealmResponse,
                         (cloudAudience, trustAddress, userName) =>
                         {

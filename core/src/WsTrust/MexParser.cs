@@ -68,13 +68,15 @@ namespace Microsoft.Identity.Core.WsTrust
     internal class MexParser
     {
         private const string WsTrustSoapTransport = "http://schemas.xmlsoap.org/soap/http";
-        private readonly UserAuthType userAuthType;
-        private readonly RequestContext requestContext;
+        private readonly UserAuthType _userAuthType;
+        private readonly RequestContext _requestContext;
+        private readonly IHttpManager _httpManager;
 
-        public MexParser(UserAuthType userAuthType, RequestContext requestContext)
+        public MexParser(IHttpManager httpManager, UserAuthType userAuthType, RequestContext requestContext)
         {
-            this.userAuthType = userAuthType;
-            this.requestContext = requestContext;
+            _httpManager = httpManager;
+            _userAuthType = userAuthType;
+            _requestContext = requestContext;
         }
 
         /// <summary>
@@ -109,10 +111,12 @@ namespace Microsoft.Identity.Core.WsTrust
             return address;
         }
 
+        // TODO: this should be on a separate manager implementation to get the document instead of taking
+        // a dependency on http stack here.
         private async Task<XDocument> FetchMexAsync(string federationMetadataUrl)
         {
             var uri = new UriBuilder(federationMetadataUrl);
-            var httpResponse = await HttpRequest.SendGetAsync(uri.Uri, null, requestContext).ConfigureAwait(false);
+            var httpResponse = await _httpManager.SendGetAsync(uri.Uri, null, _requestContext).ConfigureAwait(false);
             if (httpResponse.StatusCode != System.Net.HttpStatusCode.OK)
             {
                 throw CoreExceptionFactory.Instance.GetServiceException(
@@ -132,8 +136,8 @@ namespace Microsoft.Identity.Core.WsTrust
         private MexPolicy SelectPolicy(IReadOnlyDictionary<string, MexPolicy> policies)
         {
             //try ws-trust 1.3 first
-            return policies.Values.Where(p => p.Url != null && p.AuthType == userAuthType && p.Version == WsTrustVersion.WsTrust13).FirstOrDefault() ??
-                        policies.Values.Where(p => p.Url != null && p.AuthType == userAuthType).FirstOrDefault();
+            return policies.Values.Where(p => p.Url != null && p.AuthType == _userAuthType && p.Version == WsTrustVersion.WsTrust13).FirstOrDefault() ??
+                        policies.Values.Where(p => p.Url != null && p.AuthType == _userAuthType).FirstOrDefault();
         }
 
         private Dictionary<string, MexPolicy> ReadPolicies(XContainer mexDocument)

@@ -43,7 +43,9 @@ namespace Microsoft.Identity.Core.WsTrust
         private const int MaxExpectedMessageSize = 1024;
         private const int ExpiryInMinutes = 10;
 
+        // todo: this should be an internal method on CommonNonInteractiveHandler instead of a separate static class/method.
         public static async Task<WsTrustResponse> SendRequestAsync(
+            IHttpManager httpManager,
             WsTrustAddress wsTrustAddress,
             string wsTrustRequest,
             RequestContext requestContext)
@@ -58,7 +60,7 @@ namespace Microsoft.Identity.Core.WsTrust
                 Encoding.UTF8, headers["ContentType"]);
 
             IHttpWebResponse resp = null;
-            resp = await HttpRequest.SendPostForceResponseAsync(wsTrustAddress.Uri, headers, body, requestContext)
+            resp = await httpManager.SendPostForceResponseAsync(wsTrustAddress.Uri, headers, body, requestContext)
                .ConfigureAwait(false);
 
             if (resp.StatusCode != System.Net.HttpStatusCode.OK)
@@ -78,7 +80,6 @@ namespace Microsoft.Identity.Core.WsTrust
                     string.Format(CultureInfo.CurrentCulture, CoreErrorMessages.FederatedServiceReturnedErrorTemplate, wsTrustAddress.Uri, errorMessage)
                 );
             }
-
 
             try
             {

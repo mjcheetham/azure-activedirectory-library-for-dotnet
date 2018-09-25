@@ -49,8 +49,11 @@ namespace Test.MSAL.NET.Unit
     public class JsonWebTokenTests
     {
         //private PlatformParameters platformParameters;
-        TokenCache cache;
+        TokenCache _cache;
         private MyReceiver _myReceiver = new MyReceiver();
+        private IAadInstanceDiscovery _aadInstanceDiscovery;
+        private IHttpManager _httpManager;
+        private IAuthorityFactory _authorityFactory;
 
         MockHttpMessageHandler X5CMockHandler = new MockHttpMessageHandler()
         {
@@ -99,13 +102,15 @@ namespace Test.MSAL.NET.Unit
         [TestInitialize]
         public void TestInitialize()
         {
-            cache = new TokenCache();
+            _httpManager = new HttpManager(new HttpClientFactory(true));
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
+
+            _cache = new TokenCache();
             Authority.ValidatedAuthorities.Clear();
-            HttpClientFactory.ReturnHttpClientForMocks = true;
             HttpMessageHandlerFactory.ClearMockHandlers();
             Telemetry.GetInstance().RegisterReceiver(_myReceiver.OnEvents);
 
-            AadInstanceDiscovery.Instance.Cache.Clear();
             AddMockResponseForInstanceDisovery();
 
             HttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler
@@ -129,7 +134,7 @@ namespace Test.MSAL.NET.Unit
             var certificate = new X509Certificate2("valid_cert.pfx", TestConstants.DefaultPassword);
             var clientAssertion = new ClientAssertionCertificate(certificate);
             var clientCredential = new ClientCredential(clientAssertion);
-            var app = new ConfidentialClientApplication(TestConstants.ClientId, TestConstants.RedirectUri, clientCredential, cache, cache);
+            var app = new ConfidentialClientApplication(TestConstants.ClientId, TestConstants.RedirectUri, clientCredential, _cache, _cache);
             app.ValidateAuthority = false;
 
             //Check for x5c claim
@@ -150,7 +155,7 @@ namespace Test.MSAL.NET.Unit
             var certificate = new X509Certificate2("valid_cert.pfx", TestConstants.DefaultPassword);
             var clientAssertion = new ClientAssertionCertificate(certificate);
             var clientCredential = new ClientCredential(clientAssertion);
-            var app = new ConfidentialClientApplication(TestConstants.ClientId, TestConstants.RedirectUri, clientCredential, cache, cache);
+            var app = new ConfidentialClientApplication(TestConstants.ClientId, TestConstants.RedirectUri, clientCredential, _cache, _cache);
             app.ValidateAuthority = false;
             var userAssertion = new UserAssertion(TestConstants.DefaultAccessToken);
 

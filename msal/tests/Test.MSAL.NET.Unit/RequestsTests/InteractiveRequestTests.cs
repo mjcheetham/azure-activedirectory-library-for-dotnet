@@ -49,33 +49,33 @@ using Microsoft.Identity.Core.UI;
 namespace Test.MSAL.NET.Unit.RequestsTests
 {
     [TestClass]
-    public class InteractiveRequestTests
+    public class InteractiveRequestTests : RequestTestsCommon
     {
-        TokenCache cache;
+        TokenCache _cache;
         private readonly MyReceiver _myReceiver = new MyReceiver();
 
         [TestInitialize]
         public void TestInitialize()
         {
-            RequestTestsCommon.InitializeRequestTests();
+            InitializeRequestTests();
             Telemetry.GetInstance().RegisterReceiver(_myReceiver.OnEvents);
 
-            cache = new TokenCache();
+            _cache = new TokenCache();
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
-            cache.tokenCacheAccessor.AccessTokenCacheDictionary.Clear();
-            cache.tokenCacheAccessor.RefreshTokenCacheDictionary.Clear();
+            _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Clear();
+            _cache.tokenCacheAccessor.RefreshTokenCacheDictionary.Clear();
         }
 
         [TestMethod]
         [TestCategory("InteractiveRequestTests")]
         public void SliceParametersTest()
         {
-            Authority authority = Authority.CreateAuthority(TestConstants.AuthorityHomeTenant, false);
-            cache = new TokenCache()
+            Authority authority = AuthorityFactory.CreateAuthority(TestConstants.AuthorityHomeTenant, false);
+            _cache = new TokenCache()
             {
                 ClientId = TestConstants.ClientId
             };
@@ -91,7 +91,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
                 }
             };
 
-            RequestTestsCommon.MockInstanceDiscoveryAndOpenIdRequest();
+            MockInstanceDiscoveryAndOpenIdRequest();
 
             MockHttpMessageHandler mockHandler = new MockHttpMessageHandler();
             mockHandler.Method = HttpMethod.Post;
@@ -109,14 +109,14 @@ namespace Test.MSAL.NET.Unit.RequestsTests
                 SliceParameters = "key1=value1%20with%20encoded%20space&key2=value2",
                 ClientId = TestConstants.ClientId,
                 Scope = TestConstants.Scope,
-                TokenCache = cache,
+                TokenCache = _cache,
                 RequestContext = new RequestContext(new MsalLogger(Guid.NewGuid(), null))
             };
 
             parameters.RedirectUri = new Uri("some://uri");
             parameters.ExtraQueryParameters = "extra=qp";
 
-            InteractiveRequest request = new InteractiveRequest(parameters,
+            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters,
                 TestConstants.ScopeForAnotherResource.ToArray(),
                 TestConstants.DisplayableId,
                 UIBehavior.SelectAccount, ui);
@@ -124,8 +124,8 @@ namespace Test.MSAL.NET.Unit.RequestsTests
             task.Wait();
             AuthenticationResult result = task.Result;
             Assert.IsNotNull(result);
-            Assert.AreEqual(1, cache.tokenCacheAccessor.RefreshTokenCacheDictionary.Count);
-            Assert.AreEqual(1, cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
+            Assert.AreEqual(1, _cache.tokenCacheAccessor.RefreshTokenCacheDictionary.Count);
+            Assert.AreEqual(1, _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
             Assert.AreEqual(result.AccessToken, "some-access-token");
 
             Assert.IsTrue(HttpMessageHandlerFactory.IsMocksQueueEmpty, "All mocks should have been consumed");
@@ -136,8 +136,8 @@ namespace Test.MSAL.NET.Unit.RequestsTests
         [TestCategory("InteractiveRequestTests")]
         public void NoCacheLookup()
         {
-            Authority authority = Authority.CreateAuthority(TestConstants.AuthorityHomeTenant, false);
-            cache = new TokenCache()
+            Authority authority = AuthorityFactory.CreateAuthority(TestConstants.AuthorityHomeTenant, false);
+            _cache = new TokenCache()
             {
                 ClientId = TestConstants.ClientId
             };
@@ -154,7 +154,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
 
             string atKey = atItem.GetKey().ToString();
             atItem.Secret = atKey;
-            cache.tokenCacheAccessor.AccessTokenCacheDictionary[atKey] = JsonHelper.SerializeToJson(atItem);
+            _cache.tokenCacheAccessor.AccessTokenCacheDictionary[atKey] = JsonHelper.SerializeToJson(atItem);
 
             MockWebUI ui = new MockWebUI()
             {
@@ -162,7 +162,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
                     TestConstants.AuthorityHomeTenant + "?code=some-code")
             };
 
-            RequestTestsCommon.MockInstanceDiscoveryAndOpenIdRequest();
+            MockInstanceDiscoveryAndOpenIdRequest();
 
             MockHttpMessageHandler mockHandler = new MockHttpMessageHandler();
             mockHandler.Method = HttpMethod.Post;
@@ -175,14 +175,14 @@ namespace Test.MSAL.NET.Unit.RequestsTests
                 Authority = authority,
                 ClientId = TestConstants.ClientId,
                 Scope = TestConstants.Scope,
-                TokenCache = cache,
+                TokenCache = _cache,
                 RequestContext = new RequestContext(new MsalLogger(Guid.NewGuid(), null))
             };
 
             parameters.RedirectUri = new Uri("some://uri");
             parameters.ExtraQueryParameters = "extra=qp";
 
-            InteractiveRequest request = new InteractiveRequest(parameters,
+            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters,
                 TestConstants.ScopeForAnotherResource.ToArray(),
                  TestConstants.DisplayableId,
                 UIBehavior.SelectAccount, ui);
@@ -190,8 +190,8 @@ namespace Test.MSAL.NET.Unit.RequestsTests
             task.Wait();
             AuthenticationResult result = task.Result;
             Assert.IsNotNull(result);
-            Assert.AreEqual(1, cache.tokenCacheAccessor.RefreshTokenCacheDictionary.Count);
-            Assert.AreEqual(2, cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
+            Assert.AreEqual(1, _cache.tokenCacheAccessor.RefreshTokenCacheDictionary.Count);
+            Assert.AreEqual(2, _cache.tokenCacheAccessor.AccessTokenCacheDictionary.Count);
             Assert.AreEqual(result.AccessToken, "some-access-token");
 
             Assert.IsTrue(HttpMessageHandlerFactory.IsMocksQueueEmpty, "All mocks should have been consumed");
@@ -208,7 +208,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
         [TestCategory("InteractiveRequestTests")]
         public void RedirectUriContainsFragmentErrorTest()
         {
-            Authority authority = Authority.CreateAuthority(TestConstants.AuthorityHomeTenant, false);
+            Authority authority = AuthorityFactory.CreateAuthority(TestConstants.AuthorityHomeTenant, false);
             try
             {
                 AuthenticationRequestParameters parameters = new AuthenticationRequestParameters()
@@ -223,7 +223,8 @@ namespace Test.MSAL.NET.Unit.RequestsTests
                 parameters.RedirectUri = new Uri("some://uri#fragment=not-so-good");
                 parameters.ExtraQueryParameters = "extra=qp";
 
-                new InteractiveRequest(parameters, TestConstants.ScopeForAnotherResource.ToArray(),
+                new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
+                    parameters, TestConstants.ScopeForAnotherResource.ToArray(),
                     (string)null, UIBehavior.ForceLogin, new MockWebUI()
                     );
                 Assert.Fail("ArgumentException should be thrown here");
@@ -238,9 +239,9 @@ namespace Test.MSAL.NET.Unit.RequestsTests
         [TestCategory("InteractiveRequestTests")]
         public void VerifyAuthorizationResultTest()
         {
-            Authority authority = Authority.CreateAuthority(TestConstants.AuthorityHomeTenant, false);
+            Authority authority = AuthorityFactory.CreateAuthority(TestConstants.AuthorityHomeTenant, false);
 
-            RequestTestsCommon.MockInstanceDiscoveryAndOpenIdRequest();
+            MockInstanceDiscoveryAndOpenIdRequest();
 
             MockWebUI webUi = new MockWebUI()
             {
@@ -260,7 +261,8 @@ namespace Test.MSAL.NET.Unit.RequestsTests
             parameters.RedirectUri = new Uri("some://uri");
             parameters.ExtraQueryParameters = "extra=qp";
 
-            InteractiveRequest request = new InteractiveRequest(parameters,
+            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
+                parameters,
                 TestConstants.ScopeForAnotherResource.ToArray(),
                 (string)null, UIBehavior.ForceLogin, webUi);
             try
@@ -280,7 +282,8 @@ namespace Test.MSAL.NET.Unit.RequestsTests
                 TestConstants.AuthorityHomeTenant +
                 "?error=invalid_request&error_description=some error description");
 
-            request = new InteractiveRequest(parameters,
+            request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
+                parameters,
                 TestConstants.ScopeForAnotherResource.ToArray(),
                 (string)null, UIBehavior.ForceLogin, webUi);
 
@@ -303,7 +306,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
         [TestCategory("InteractiveRequestTests")]
         public void DuplicateQueryParameterErrorTest()
         {
-            Authority authority = Authority.CreateAuthority(TestConstants.AuthorityHomeTenant, false);
+            Authority authority = AuthorityFactory.CreateAuthority(TestConstants.AuthorityHomeTenant, false);
 
             AuthenticationRequestParameters parameters = new AuthenticationRequestParameters()
             {
@@ -317,9 +320,10 @@ namespace Test.MSAL.NET.Unit.RequestsTests
             parameters.RedirectUri = new Uri("some://uri");
             parameters.ExtraQueryParameters = "extra=qp&prompt=login";
 
-            RequestTestsCommon.MockInstanceDiscoveryAndOpenIdRequest();
+            MockInstanceDiscoveryAndOpenIdRequest();
 
-            InteractiveRequest request = new InteractiveRequest(parameters,
+            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
+                parameters,
                 TestConstants.ScopeForAnotherResource.ToArray(),
                 null, UIBehavior.ForceLogin, new MockWebUI());
 

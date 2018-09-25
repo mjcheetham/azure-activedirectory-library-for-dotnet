@@ -35,13 +35,38 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Identity.Core.Http
 {
-    internal class HttpRequest
+    internal interface IHttpManager
     {
-        private HttpRequest()
+        Task<HttpResponse> SendPostAsync(
+            Uri endpoint, IDictionary<string, string> headers,
+            IDictionary<string, string> bodyParameters, RequestContext requestContext);
+
+        Task<HttpResponse> SendPostAsync(
+            Uri endpoint, IDictionary<string, string> headers,
+            HttpContent body, RequestContext requestContext);
+
+        Task<HttpResponse> SendGetAsync(
+            Uri endpoint,
+            Dictionary<string, string> headers,
+            RequestContext requestContext);
+
+        Task<IHttpWebResponse> SendPostForceResponseAsync(
+            Uri uri,
+            Dictionary<string, string> headers,
+            StringContent body,
+            RequestContext requestContext);
+    }
+
+    internal class HttpManager : IHttpManager
+    {
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public HttpManager(IHttpClientFactory httpClientFactory)
         {
+            _httpClientFactory = httpClientFactory;
         }
 
-        public static async Task<HttpResponse> SendPostAsync(Uri endpoint, IDictionary<string, string> headers,
+        public async Task<HttpResponse> SendPostAsync(Uri endpoint, IDictionary<string, string> headers,
             IDictionary<string, string> bodyParameters, RequestContext requestContext)
         {
             HttpContent body = null;
@@ -52,7 +77,7 @@ namespace Microsoft.Identity.Core.Http
             return await SendPostAsync(endpoint, headers, body, requestContext).ConfigureAwait(false);
         }
 
-        public static async Task<HttpResponse> SendPostAsync(Uri endpoint, IDictionary<string, string> headers,
+        public async Task<HttpResponse> SendPostAsync(Uri endpoint, IDictionary<string, string> headers,
             HttpContent body, RequestContext requestContext)
         {
             return
@@ -61,8 +86,8 @@ namespace Microsoft.Identity.Core.Http
                         .ConfigureAwait(false);
         }
 
-        public static async Task<HttpResponse> SendGetAsync(
-            Uri endpoint, 
+        public async Task<HttpResponse> SendGetAsync(
+            Uri endpoint,
             Dictionary<string, string> headers,
             RequestContext requestContext)
         {
@@ -74,10 +99,10 @@ namespace Microsoft.Identity.Core.Http
         /// but does not throw a ServiceUnavailable service exception. Instead, it returns the <see cref="IHttpWebResponse"/> associated
         /// with the request.
         /// </summary>
-        public static async Task<IHttpWebResponse> SendPostForceResponseAsync(
-            Uri uri, 
-            Dictionary<string, string> headers, 
-            StringContent body, 
+        public async Task<IHttpWebResponse> SendPostForceResponseAsync(
+            Uri uri,
+            Dictionary<string, string> headers,
+            StringContent body,
             RequestContext requestContext)
         {
             return await
@@ -85,7 +110,7 @@ namespace Microsoft.Identity.Core.Http
                          .ConfigureAwait(false);
         }
 
-        private static HttpRequestMessage CreateRequestMessage(Uri endpoint, IDictionary<string, string> headers)
+        private HttpRequestMessage CreateRequestMessage(Uri endpoint, IDictionary<string, string> headers)
         {
             HttpRequestMessage requestMessage = new HttpRequestMessage { RequestUri = endpoint };
             requestMessage.Headers.Accept.Clear();
@@ -100,12 +125,12 @@ namespace Microsoft.Identity.Core.Http
             return requestMessage;
         }
 
-        private static async Task<HttpResponse> ExecuteWithRetryAsync(
-            Uri endpoint, 
+        private async Task<HttpResponse> ExecuteWithRetryAsync(
+            Uri endpoint,
             IDictionary<string, string> headers,
-            HttpContent body, 
+            HttpContent body,
             HttpMethod method,
-            RequestContext requestContext, 
+            RequestContext requestContext,
             bool doNotThrow = false,
             bool retry = true)
         {
@@ -157,12 +182,12 @@ namespace Microsoft.Identity.Core.Http
                     requestContext.Logger.InfoPii(msg);
                     await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                     return await ExecuteWithRetryAsync(
-                        endpoint, 
-                        headers, 
-                        body, 
-                        method, 
-                        requestContext, 
-                        doNotThrow, 
+                        endpoint,
+                        headers,
+                        body,
+                        method,
+                        requestContext,
+                        doNotThrow,
                         retry: false).ConfigureAwait(false);
                 }
 
@@ -197,10 +222,10 @@ namespace Microsoft.Identity.Core.Http
             return response;
         }
 
-        private static async Task<HttpResponse> ExecuteAsync(Uri endpoint, IDictionary<string, string> headers,
+        private async Task<HttpResponse> ExecuteAsync(Uri endpoint, IDictionary<string, string> headers,
             HttpContent body, HttpMethod method)
         {
-            HttpClient client = HttpClientFactory.GetHttpClient();
+            HttpClient client = _httpClientFactory.GetHttpClient();
 
             using (HttpRequestMessage requestMessage = CreateRequestMessage(endpoint, headers))
             {
@@ -214,11 +239,10 @@ namespace Microsoft.Identity.Core.Http
                     returnValue.UserAgent = client.DefaultRequestHeaders.UserAgent.ToString();
                     return returnValue;
                 }
-
             }
         }
 
-        private static async Task<HttpResponse> CreateResponseAsync(HttpResponseMessage response)
+        private async Task<HttpResponse> CreateResponseAsync(HttpResponseMessage response)
         {
             var headers = new Dictionary<string, string>();
             if (response.Headers != null)

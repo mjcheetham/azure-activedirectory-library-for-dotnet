@@ -45,6 +45,7 @@ using HttpMessageHandlerFactory = Microsoft.IdentityModel.Clients.ActiveDirector
 using CoreHttpMessageHandlerFactory = Microsoft.Identity.Core.Http.HttpMessageHandlerFactory;
 using CoreHttpClientFactory = Microsoft.Identity.Core.Http.HttpClientFactory;
 using UserCredential = Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential;
+using Microsoft.Identity.Core.Http;
 
 namespace Test.ADAL.NET.Integration
 {
@@ -54,13 +55,16 @@ namespace Test.ADAL.NET.Integration
     [DeploymentItem("WsTrustResponse13.xml")]
     public class FederatedUserCredentialTests
     {
+        private IHttpManager _httpManager;
+
         [TestInitialize]
         public void Initialize()
         {
-            CoreHttpClientFactory.ReturnHttpClientForMocks = true;
             CoreHttpMessageHandlerFactory.ClearMockHandlers();
             ResetInstanceDiscovery();
             CoreExceptionFactory.Instance = new AdalExceptionFactory();
+
+            _httpManager = new HttpManager(new HttpClientFactory(true));
         }
 
         public void ResetInstanceDiscovery()

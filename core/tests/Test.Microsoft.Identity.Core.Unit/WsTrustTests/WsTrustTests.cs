@@ -49,19 +49,20 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
     [DeploymentItem(@"Resources\WsTrustResponse13.xml")]
     public class WsTrustTests
     {
+        private IHttpManager _httpManager;
+
         [TestInitialize]
         public void TestInitialize()
         {
             CoreExceptionFactory.Instance = new TestExceptionFactory();
+            _httpManager = new HttpManager(new HttpClientFactory(true));
+            HttpMessageHandlerFactory.ClearMockHandlers();
         }
 
         [TestMethod]
         [Description("WS-Trust Request Test")]
         public async Task WsTrustRequestTest()
         {
-            HttpClientFactory.ReturnHttpClientForMocks = true;
-            HttpMessageHandlerFactory.ClearMockHandlers();
-
             string wsTrustAddress = "https://some/address/usernamemixed";
             WsTrustAddress address = new WsTrustAddress()
             {
@@ -82,7 +83,7 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
             var message = WsTrustRequestBuilder.BuildMessage("urn:federation:SomeAudience", address, new IntegratedWindowsAuthInput("username"));
 
             WsTrustResponse wstResponse = await WsTrustRequest.SendRequestAsync(
-               address, message.ToString(), null);
+               _httpManager, address, message.ToString(), null);
 
             Assert.IsNotNull(wstResponse.Token);
 
@@ -93,9 +94,6 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
         [Description("WsTrustRequest encounters HTTP 404")]
         public async Task WsTrustRequestFailureTestAsync()
         {
-            HttpClientFactory.ReturnHttpClientForMocks = true;
-            HttpMessageHandlerFactory.ClearMockHandlers();
-
             string URI = "https://some/address/usernamemixed";
             WsTrustAddress address = new WsTrustAddress()
             {
@@ -118,7 +116,7 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
             {
                 var message = WsTrustRequestBuilder.BuildMessage("urn:federation:SomeAudience", address, new IntegratedWindowsAuthInput("username"));
                 WsTrustResponse wstResponse = await WsTrustRequest.SendRequestAsync(
-                    address, message.ToString(), requestContext);
+                    _httpManager, address, message.ToString(), requestContext);
                 Assert.Fail("We expect an exception to be thrown here");
             }
             catch (TestException ex)

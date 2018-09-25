@@ -57,9 +57,9 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
                 var userPasswordCredential = userCredential as UserPasswordCredential;
 
                 return await ctx.AcquireTokenCommonAsync(
-                     resource,
-                     clientId,
-                     userPasswordCredential.UserPasswordInput).ConfigureAwait(false);
+                    resource,
+                    clientId,
+                    userPasswordCredential.UserPasswordInput).ConfigureAwait(false);
             }
 #endif
             return await ctx.AcquireTokenCommonAsync(resource, clientId, userCredential.IWAInput).ConfigureAwait(false);

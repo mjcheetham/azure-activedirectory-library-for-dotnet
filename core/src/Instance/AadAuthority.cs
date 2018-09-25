@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Identity.Core.Http;
 using Microsoft.Identity.Core.OAuth2;
 
 namespace Microsoft.Identity.Core.Instance
@@ -53,14 +54,21 @@ namespace Microsoft.Identity.Core.Instance
 
         public const string AADCanonicalAuthorityTemplate = "https://{0}/{1}/";
 
-        internal AadAuthority(string authority, bool validateAuthority) : base(authority, validateAuthority)
+        private readonly IAadInstanceDiscovery _aadInstanceDiscovery;
+
+        internal AadAuthority(
+            IHttpManager httpManager,
+            IAadInstanceDiscovery aadInstanceDiscovery, 
+            string authority, 
+            bool validateAuthority) : base(httpManager, authority, validateAuthority)
         {
+            _aadInstanceDiscovery = aadInstanceDiscovery;
             AuthorityType = AuthorityType.Aad;
         }
 
         internal override async Task UpdateCanonicalAuthorityAsync(RequestContext requestContext)
         {
-            var metadata = await AadInstanceDiscovery.Instance.
+            var metadata = await _aadInstanceDiscovery.
                 GetMetadataEntryAsync(new Uri(CanonicalAuthority), this.ValidateAuthority, requestContext).ConfigureAwait(false);
 
             CanonicalAuthority = UpdateHost(CanonicalAuthority, metadata.PreferredNetwork);
@@ -74,8 +82,7 @@ namespace Microsoft.Identity.Core.Instance
             if (ValidateAuthority && !IsInTrustedHostList(authorityUri.Host))
             {
                 InstanceDiscoveryResponse discoveryResponse =
-                    await AadInstanceDiscovery.Instance.
-                    DoInstanceDiscoveryAndCacheAsync(authorityUri, true, requestContext).ConfigureAwait(false);
+                    await _aadInstanceDiscovery.DoInstanceDiscoveryAndCacheAsync(authorityUri, true, requestContext).ConfigureAwait(false);
 
                 return discoveryResponse.TenantDiscoveryEndpoint;
             }

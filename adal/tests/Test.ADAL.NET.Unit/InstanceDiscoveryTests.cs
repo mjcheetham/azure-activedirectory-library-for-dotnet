@@ -44,6 +44,7 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Platform;
 using Test.ADAL.NET.Common;
 using CoreHttpClientFactory = Microsoft.Identity.Core.Http.HttpClientFactory;
 using CoreHttpMessageHandlerFactory = Microsoft.Identity.Core.Http.HttpMessageHandlerFactory;
+using Microsoft.Identity.Core.Http;
 
 namespace Test.ADAL.NET.Unit
 {
@@ -296,7 +297,6 @@ namespace Test.ADAL.NET.Unit
             AddMockInstanceDiscovery(host);
             await authenticator.UpdateFromTemplateAsync(new RequestContext(new AdalLogger(new Guid())));
 
-            CoreHttpClientFactory.ReturnHttpClientForMocks = true;
             CoreHttpMessageHandlerFactory.ClearMockHandlers();
             CoreHttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler()
             {
@@ -319,6 +319,7 @@ namespace Test.ADAL.NET.Unit
 
             var privateObject = new PrivateObject(
                 new AcquireTokenUsernamePasswordHandler(
+                    new HttpManager(new HttpClientFactory(true)),
                     requestData, 
                     new UsernamePasswordInput("johndoe@contoso.com", "fakepassword")));
 

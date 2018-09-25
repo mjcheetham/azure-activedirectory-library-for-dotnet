@@ -36,6 +36,7 @@ using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Instance;
 using Microsoft.Identity.Core.Helpers;
 using Microsoft.Identity.Core.Telemetry;
+using Microsoft.Identity.Core.Http;
 
 namespace Microsoft.Identity.Client
 {
@@ -49,7 +50,10 @@ namespace Microsoft.Identity.Client
     public abstract partial class ClientApplicationBase
 #pragma warning restore CS1574 // XML comment has cref attribute that could not be resolved
     {
-        private TokenCache userTokenCache;
+        private TokenCache _userTokenCache;
+        internal IHttpManager HttpManager { get; }
+        internal IAuthorityFactory AuthorityFactory { get; }
+        internal IAadInstanceDiscovery AadInstanceDiscovery { get; }
 
         /// <Summary>
         /// Default Authority used for interactive calls.
@@ -59,6 +63,9 @@ namespace Microsoft.Identity.Client
         /// <summary>
         /// Constructor of the base application
         /// </summary>
+        /// <param name="httpManager"></param>
+        /// <param name="authorityFactory"></param>
+        /// <param name="aadInstanceDiscovery"></param>
         /// <param name="clientId">Client ID (also known as <i>Application ID</i>) of the application as registered in the 
         /// application registration portal (https://aka.ms/msal-net-register-app)</param>
         /// <param name="authority">URL of the security token service (STS) from which MSAL.NET will acquire the tokens.
@@ -77,11 +84,16 @@ namespace Microsoft.Identity.Client
         /// <param name="validateAuthority">Boolean telling MSAL.NET if the authority needs to be verified against a list of known authorities. 
         /// This should be set to <c>false</c> for Azure AD B2C authorities as those are customer specific (a list of known B2C authorities
         /// cannot be maintained by MSAL.NET</param>
-        protected ClientApplicationBase(string clientId, string authority, string redirectUri,
-            bool validateAuthority)
+        internal ClientApplicationBase(
+            IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery,
+            string clientId, string authority, string redirectUri, bool validateAuthority)
         {
+            HttpManager = httpManager ?? new HttpManager(new HttpClientFactory());
+            AadInstanceDiscovery = aadInstanceDiscovery ?? new AadInstanceDiscovery(HttpManager);
+            AuthorityFactory = authorityFactory ?? new AuthorityFactory(HttpManager, AadInstanceDiscovery);
+
             ClientId = clientId;
-            Authority authorityInstance = Core.Instance.Authority.CreateAuthority(authority, validateAuthority);
+            Authority authorityInstance = AuthorityFactory.CreateAuthority(authority, validateAuthority);
             Authority = authorityInstance.CanonicalAuthority;
             RedirectUri = redirectUri;
             ValidateAuthority = validateAuthority;
@@ -151,13 +163,13 @@ namespace Microsoft.Identity.Client
         /// </Summary>
         internal TokenCache UserTokenCache
         {
-            get { return userTokenCache; }
+            get { return _userTokenCache; }
             set
             {
-                userTokenCache = value;
-                if (userTokenCache != null)
+                _userTokenCache = value;
+                if (_userTokenCache != null)
                 {
-                    userTokenCache.ClientId = ClientId;
+                    _userTokenCache.ClientId = ClientId;
                 }
             }
         }
@@ -183,7 +195,7 @@ namespace Microsoft.Identity.Client
                 requestContext.Logger.InfoPii(msg);
                 return Enumerable.Empty<Account>();
             }
-            return await UserTokenCache.GetAccountsAsync(Authority, ValidateAuthority, requestContext).ConfigureAwait(false);
+            return await UserTokenCache.GetAccountsAsync(AuthorityFactory, AadInstanceDiscovery, Authority, ValidateAuthority, requestContext).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -250,7 +262,7 @@ namespace Microsoft.Identity.Client
             Authority authorityInstance = null;
             if (!string.IsNullOrEmpty(authority))
             {
-                authorityInstance = Core.Instance.Authority.CreateAuthority(authority, ValidateAuthority);
+                authorityInstance = AuthorityFactory.CreateAuthority(authority, ValidateAuthority);
             }
 
             return
@@ -271,12 +283,13 @@ namespace Microsoft.Identity.Client
                 return;
             }
 
-            await UserTokenCache.RemoveAsync(Authority, ValidateAuthority, account, requestContext).ConfigureAwait(false);
+            await UserTokenCache.RemoveAsync(AuthorityFactory, AadInstanceDiscovery, 
+                Authority, ValidateAuthority, account, requestContext).ConfigureAwait(false);
         }
 
         internal Authority GetAuthority(IAccount account)
         {
-            var authority = Core.Instance.Authority.CreateAuthority(Authority, ValidateAuthority);
+            var authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             var tenantId = authority.GetTenantId();
 
             if (Core.Instance.Authority.TenantlessTenantNames.Contains(tenantId)
@@ -302,6 +315,9 @@ namespace Microsoft.Identity.Client
             }
 
             var handler = new SilentRequest(
+                HttpManager,
+                AuthorityFactory,
+                AadInstanceDiscovery,
                 CreateRequestParameters(authority, scopes, account, UserTokenCache),
                 forceRefresh)
             { ApiId = apiId };
