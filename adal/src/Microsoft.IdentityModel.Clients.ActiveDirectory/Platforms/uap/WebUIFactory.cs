@@ -32,7 +32,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Platform
 {
     internal class WebUIFactory : IWebUIFactory
     {
-        public IWebUI CreateAuthenticationDialog(CoreUIParent parent, RequestContext requestContext)
+        public IWebUI CreateAuthenticationDialog(ICoreExceptionFactory coreExceptionFactory, CoreUIParent parent, RequestContext requestContext)
         {
             return new WebUI(parent, requestContext);
         }   

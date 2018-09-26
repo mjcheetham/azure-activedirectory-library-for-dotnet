@@ -36,6 +36,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Http;
+using Test.Microsoft.Identity.Core.Unit.Mocks;
 
 namespace Test.MSAL.NET.Unit.RequestsTests
 {
@@ -47,13 +48,17 @@ namespace Test.MSAL.NET.Unit.RequestsTests
         private IAadInstanceDiscovery _aadInstanceDiscovery;
         private IHttpManager _httpManager;
         private IAuthorityFactory _authorityFactory;
+        private ICoreExceptionFactory _coreExceptionFactory;
 
         [TestInitialize]
         public void TestInitialize()
         {
-            _httpManager = new HttpManager(new HttpClientFactory(true));
-            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
-            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
+            _coreExceptionFactory = new TestExceptionFactory();
+            _httpManager = new HttpManager(new HttpClientFactory(false), _coreExceptionFactory);
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(_coreExceptionFactory);
+
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager, _coreExceptionFactory);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery, _coreExceptionFactory);
         }
 
         [TestMethod]

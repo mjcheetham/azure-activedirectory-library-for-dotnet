@@ -27,6 +27,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Http;
 using Microsoft.Identity.Core.Instance;
 using Microsoft.Identity.Core.OAuth2;
@@ -35,9 +36,13 @@ namespace Microsoft.Identity.Client.Internal.Requests
 {
     internal class OnBehalfOfRequest : RequestBase
     {
-        public OnBehalfOfRequest(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery,
+        public OnBehalfOfRequest(
+            IHttpManager httpManager, 
+            IAuthorityFactory authorityFactory, 
+            IAadInstanceDiscovery aadInstanceDiscovery,
+            ICoreExceptionFactory coreExceptionFactory,
             AuthenticationRequestParameters authenticationRequestParameters)
-            : base(httpManager, authorityFactory, aadInstanceDiscovery, authenticationRequestParameters)
+            : base(httpManager, authorityFactory, aadInstanceDiscovery, coreExceptionFactory, authenticationRequestParameters)
         {
             if (authenticationRequestParameters.UserAssertion == null)
             {

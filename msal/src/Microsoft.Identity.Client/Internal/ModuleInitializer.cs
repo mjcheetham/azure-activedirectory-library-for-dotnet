@@ -78,7 +78,7 @@ namespace Microsoft.Identity.Client.Internal
 
         private static void InitializeModule()
         {
-            CoreExceptionFactory.Instance = new MsalExceptionFactory();
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(new MsalExceptionFactory());
             CoreTelemetryService.InitializeCoreTelemetryService(Telemetry.GetInstance() as ITelemetry);
             CoreLoggerBase.Default = new MsalLogger(Guid.Empty, null);
             CorePlatformInformationBase.Instance = new PlatformInformation();

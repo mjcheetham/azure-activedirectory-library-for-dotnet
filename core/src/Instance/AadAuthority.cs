@@ -58,9 +58,10 @@ namespace Microsoft.Identity.Core.Instance
 
         internal AadAuthority(
             IHttpManager httpManager,
-            IAadInstanceDiscovery aadInstanceDiscovery, 
+            ICoreExceptionFactory coreExceptionFactory,
+            IAadInstanceDiscovery aadInstanceDiscovery,
             string authority, 
-            bool validateAuthority) : base(httpManager, authority, validateAuthority)
+            bool validateAuthority) : base(httpManager, coreExceptionFactory, authority, validateAuthority)
         {
             _aadInstanceDiscovery = aadInstanceDiscovery;
             AuthorityType = AuthorityType.Aad;

@@ -49,15 +49,21 @@ namespace Test.MSAL.NET.Unit
         private IAadInstanceDiscovery _aadInstanceDiscovery;
         private IHttpManager _httpManager;
         private IAuthorityFactory _authorityFactory;
+        private ICoreExceptionFactory _coreExceptionFactory;
 
         [TestInitialize]
         public void TestInitialize()
         {
-            _httpManager = new HttpManager(new HttpClientFactory(true));
-            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
-            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
-
+            // TODO: some of this call will conflict with what we're doing here...
             ModuleInitializer.ForceModuleInitializationTestOnly();
+
+            _coreExceptionFactory = new TestExceptionFactory();
+            _httpManager = new HttpManager(new HttpClientFactory(true), _coreExceptionFactory);
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(_coreExceptionFactory);
+
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager, _coreExceptionFactory);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery, _coreExceptionFactory);
+
             Authority.ValidatedAuthorities.Clear();
             HttpMessageHandlerFactory.ClearMockHandlers();
             Telemetry.GetInstance().RegisterReceiver(_myReceiver.OnEvents);
@@ -91,7 +97,7 @@ namespace Test.MSAL.NET.Unit
         public void UnifiedCache_MsalStoresToAndReadRtFromAdalCache()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             app.UserTokenCache.legacyCachePersistance = new TestLegacyCachePersistance();
@@ -170,11 +176,11 @@ namespace Test.MSAL.NET.Unit
 
             CreateAdalCache(app.UserTokenCache.legacyCachePersistance, TestConstants.Scope.ToString());
 
-            var tuple = CacheFallbackOperations.GetAllAdalUsersForMsal(app.UserTokenCache.legacyCachePersistance, authorityHostAliases, TestConstants.ClientId);
+            var tuple = CacheFallbackOperations.GetAllAdalUsersForMsal(_coreExceptionFactory, app.UserTokenCache.legacyCachePersistance, authorityHostAliases, TestConstants.ClientId);
 
             CreateAdalCache(app.UserTokenCache.legacyCachePersistance, "user.read");
 
-            var tuple2 = CacheFallbackOperations.GetAllAdalUsersForMsal(app.UserTokenCache.legacyCachePersistance, authorityHostAliases, TestConstants.ClientId);
+            var tuple2 = CacheFallbackOperations.GetAllAdalUsersForMsal(_coreExceptionFactory, app.UserTokenCache.legacyCachePersistance, authorityHostAliases, TestConstants.ClientId);
 
             Assert.AreEqual(tuple.Item1.Keys.First(), tuple2.Item1.Keys.First());
 

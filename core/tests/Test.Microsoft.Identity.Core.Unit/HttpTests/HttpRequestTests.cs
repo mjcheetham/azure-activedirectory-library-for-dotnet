@@ -50,9 +50,9 @@ namespace Test.Microsoft.Identity.Unit.HttpTests
         {
             Authority.ValidatedAuthorities.Clear();
             HttpMessageHandlerFactory.ClearMockHandlers();
-            CoreExceptionFactory.Instance = new TestExceptionFactory();
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(new TestExceptionFactory());
 
-            _httpManager = new HttpManager(new HttpClientFactory(true));
+            _httpManager = new HttpManager(new HttpClientFactory(true), InternalCoreExceptionFactory.GetCoreExceptionFactory());
         }
 
         [TestMethod]

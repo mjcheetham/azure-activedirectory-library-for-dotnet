@@ -54,6 +54,7 @@ namespace Microsoft.Identity.Client
         internal IHttpManager HttpManager { get; }
         internal IAuthorityFactory AuthorityFactory { get; }
         internal IAadInstanceDiscovery AadInstanceDiscovery { get; }
+        internal ICoreExceptionFactory CoreExceptionFactory { get; }
 
         /// <Summary>
         /// Default Authority used for interactive calls.
@@ -66,6 +67,7 @@ namespace Microsoft.Identity.Client
         /// <param name="httpManager"></param>
         /// <param name="authorityFactory"></param>
         /// <param name="aadInstanceDiscovery"></param>
+        /// <param name="coreExceptionFactory"></param>
         /// <param name="clientId">Client ID (also known as <i>Application ID</i>) of the application as registered in the 
         /// application registration portal (https://aka.ms/msal-net-register-app)</param>
         /// <param name="authority">URL of the security token service (STS) from which MSAL.NET will acquire the tokens.
@@ -85,12 +87,19 @@ namespace Microsoft.Identity.Client
         /// This should be set to <c>false</c> for Azure AD B2C authorities as those are customer specific (a list of known B2C authorities
         /// cannot be maintained by MSAL.NET</param>
         internal ClientApplicationBase(
-            IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery,
-            string clientId, string authority, string redirectUri, bool validateAuthority)
+            IHttpManager httpManager, 
+            IAuthorityFactory authorityFactory, 
+            IAadInstanceDiscovery aadInstanceDiscovery,
+            ICoreExceptionFactory coreExceptionFactory,
+            string clientId, 
+            string authority, 
+            string redirectUri, 
+            bool validateAuthority)
         {
-            HttpManager = httpManager ?? new HttpManager(new HttpClientFactory());
-            AadInstanceDiscovery = aadInstanceDiscovery ?? new AadInstanceDiscovery(HttpManager);
-            AuthorityFactory = authorityFactory ?? new AuthorityFactory(HttpManager, AadInstanceDiscovery);
+            CoreExceptionFactory = coreExceptionFactory ?? null;  // TODO: HUGE BUG!!  NEED TO FIX THIS
+            HttpManager = httpManager ?? new HttpManager(new HttpClientFactory(), CoreExceptionFactory);
+            AadInstanceDiscovery = aadInstanceDiscovery ?? new AadInstanceDiscovery(HttpManager, CoreExceptionFactory);
+            AuthorityFactory = authorityFactory ?? new AuthorityFactory(HttpManager, AadInstanceDiscovery, CoreExceptionFactory);
 
             ClientId = clientId;
             Authority authorityInstance = AuthorityFactory.CreateAuthority(authority, validateAuthority);
@@ -318,6 +327,7 @@ namespace Microsoft.Identity.Client
                 HttpManager,
                 AuthorityFactory,
                 AadInstanceDiscovery,
+                CoreExceptionFactory,
                 CreateRequestParameters(authority, scopes, account, UserTokenCache),
                 forceRefresh)
             { ApiId = apiId };

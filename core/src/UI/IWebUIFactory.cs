@@ -29,6 +29,9 @@ namespace Microsoft.Identity.Core.UI
 {
     internal interface IWebUIFactory
     {
-        IWebUI CreateAuthenticationDialog(CoreUIParent coreUIParent, RequestContext requestContext);
+        IWebUI CreateAuthenticationDialog(
+            ICoreExceptionFactory coreExceptionFactory, 
+            CoreUIParent coreUIParent, 
+            RequestContext requestContext);
     }
 }

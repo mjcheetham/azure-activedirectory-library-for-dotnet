@@ -46,11 +46,13 @@ namespace Microsoft.Identity.Core.Instance
     {
         private readonly IHttpManager _httpManager;
         private readonly IAadInstanceDiscovery _aadInstanceDiscovery;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
-        public AuthorityFactory(IHttpManager httpManager, IAadInstanceDiscovery aadInstanceDiscovery)
+        public AuthorityFactory(IHttpManager httpManager, IAadInstanceDiscovery aadInstanceDiscovery, ICoreExceptionFactory coreExceptionFactory)
         {
             _httpManager = httpManager;
             _aadInstanceDiscovery = aadInstanceDiscovery;
+            _coreExceptionFactory = coreExceptionFactory;
         }
 
         public Authority CreateAuthority(string authority, bool validateAuthority)
@@ -61,17 +63,17 @@ namespace Microsoft.Identity.Core.Instance
             switch (GetAuthorityType(authority))
             {
             case AuthorityType.Adfs:
-                throw CoreExceptionFactory.Instance.GetClientException(CoreErrorCodes.InvalidAuthorityType,
+                throw _coreExceptionFactory.GetClientException(CoreErrorCodes.InvalidAuthorityType,
                    "ADFS is not a supported authority");
 
             case AuthorityType.B2C:
-                return new B2CAuthority(_httpManager, _aadInstanceDiscovery, authority, validateAuthority);
+                return new B2CAuthority(_httpManager, _coreExceptionFactory, _aadInstanceDiscovery, authority, validateAuthority);
 
             case AuthorityType.Aad:
-                return new AadAuthority(_httpManager, _aadInstanceDiscovery, authority, validateAuthority);
+                return new AadAuthority(_httpManager, _coreExceptionFactory, _aadInstanceDiscovery, authority, validateAuthority);
 
             default:
-                throw CoreExceptionFactory.Instance.GetClientException(CoreErrorCodes.InvalidAuthorityType,
+                throw _coreExceptionFactory.GetClientException(CoreErrorCodes.InvalidAuthorityType,
                  "Usupported authority type");
             }
         }
@@ -149,10 +151,12 @@ namespace Microsoft.Identity.Core.Instance
         protected abstract Task<string> GetOpenIdConfigurationEndpointAsync(string userPrincipalName, RequestContext requestContext);
 
         protected IHttpManager HttpManager { get; }
+        protected ICoreExceptionFactory CoreExceptionFactory { get; }
 
-        protected Authority(IHttpManager httpManager, string authority, bool validateAuthority)
+        protected Authority(IHttpManager httpManager, ICoreExceptionFactory coreExceptionFactory, string authority, bool validateAuthority)
         {
             HttpManager = httpManager;
+            CoreExceptionFactory = coreExceptionFactory;
 
             UriBuilder authorityUri = new UriBuilder(authority);
             Host = authorityUri.Host;
@@ -242,19 +246,19 @@ namespace Microsoft.Identity.Core.Instance
 
                 if (string.IsNullOrEmpty(edr.AuthorizationEndpoint))
                 {
-                    throw CoreExceptionFactory.Instance.GetClientException(CoreErrorCodes.TenantDiscoveryFailedError,
+                    throw CoreExceptionFactory.GetClientException(CoreErrorCodes.TenantDiscoveryFailedError,
                         "Authorize endpoint was not found in the openid configuration");
                 }
 
                 if (string.IsNullOrEmpty(edr.TokenEndpoint))
                 {
-                    throw CoreExceptionFactory.Instance.GetClientException(CoreErrorCodes.TenantDiscoveryFailedError,
+                    throw CoreExceptionFactory.GetClientException(CoreErrorCodes.TenantDiscoveryFailedError,
                         "Token endpoint was not found in the openid configuration");
                 }
 
                 if (string.IsNullOrEmpty(edr.Issuer))
                 {
-                    throw CoreExceptionFactory.Instance.GetClientException(CoreErrorCodes.TenantDiscoveryFailedError,
+                    throw CoreExceptionFactory.GetClientException(CoreErrorCodes.TenantDiscoveryFailedError,
                         "Issuer was not found in the openid configuration");
                 }
 
@@ -281,7 +285,7 @@ namespace Microsoft.Identity.Core.Instance
         private async Task<TenantDiscoveryResponse> DiscoverEndpointsAsync(string openIdConfigurationEndpoint,
             RequestContext requestContext)
         {
-            OAuth2Client client = new OAuth2Client(HttpManager);
+            OAuth2Client client = new OAuth2Client(HttpManager, CoreExceptionFactory);
             return
                 await
                     client.ExecuteRequestAsync<TenantDiscoveryResponse>(new Uri(openIdConfigurationEndpoint),

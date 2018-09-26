@@ -32,6 +32,7 @@ using Microsoft.Identity.Core.Http;
 using Microsoft.Identity.Core.Instance;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Test.Microsoft.Identity.Core.Unit;
+using Test.Microsoft.Identity.Core.Unit.Mocks;
 using Guid = System.Guid;
 
 namespace Test.Microsoft.Identity.Core.Unit.InstanceTests
@@ -44,13 +45,17 @@ namespace Test.Microsoft.Identity.Core.Unit.InstanceTests
         private IAadInstanceDiscovery _aadInstanceDiscovery;
         private IHttpManager _httpManager;
         private IAuthorityFactory _authorityFactory;
+        private ICoreExceptionFactory _coreExceptionFactory;
 
         [TestInitialize]
         public void TestInitialize()
         {
-            _httpManager = new HttpManager(new HttpClientFactory(true));
-            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
-            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
+            _coreExceptionFactory = new TestExceptionFactory();
+            _httpManager = new HttpManager(new HttpClientFactory(false), _coreExceptionFactory);
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(_coreExceptionFactory);
+
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager, _coreExceptionFactory);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery, _coreExceptionFactory);
 
             Authority.ValidatedAuthorities.Clear();
             HttpMessageHandlerFactory.ClearMockHandlers();
@@ -119,13 +124,13 @@ namespace Test.Microsoft.Identity.Core.Unit.InstanceTests
             const string uriCustomPort = "https://login.microsoftonline.in:444/tfp/tenant/policy";
             const string uriCustomPortTailSlash = "https://login.microsoftonline.in:444/tfp/tenant/policy/";
 
-            var authority = new B2CAuthority(_httpManager, _aadInstanceDiscovery, uriNoPort, false);
+            var authority = new B2CAuthority(_httpManager, _coreExceptionFactory, _aadInstanceDiscovery, uriNoPort, false);
             Assert.AreEqual(uriNoPortTailSlash, authority.CanonicalAuthority);
 
-            authority = new B2CAuthority(_httpManager, _aadInstanceDiscovery, uriDefaultPort, false);
+            authority = new B2CAuthority(_httpManager, _coreExceptionFactory, _aadInstanceDiscovery, uriDefaultPort, false);
             Assert.AreEqual(uriNoPortTailSlash, authority.CanonicalAuthority);
 
-            authority = new B2CAuthority(_httpManager, _aadInstanceDiscovery, uriCustomPort, false);
+            authority = new B2CAuthority(_httpManager, _coreExceptionFactory, _aadInstanceDiscovery, uriCustomPort, false);
             Assert.AreEqual(uriCustomPortTailSlash, authority.CanonicalAuthority);
         }
     }

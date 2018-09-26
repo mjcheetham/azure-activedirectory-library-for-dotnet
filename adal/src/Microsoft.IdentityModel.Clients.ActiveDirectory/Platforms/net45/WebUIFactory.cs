@@ -32,15 +32,20 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Platform
 {
     internal class WebUIFactory : IWebUIFactory
     {
-        public IWebUI CreateAuthenticationDialog(CoreUIParent coreUIParent, RequestContext context)
+        public IWebUI CreateAuthenticationDialog(ICoreExceptionFactory coreExceptionFactory, CoreUIParent coreUIParent, RequestContext context)
         {
             if (coreUIParent.UseHiddenBrowser)
             {
-
-                return new SilentWebUI(context) { OwnerWindow = coreUIParent.OwnerWindow };
+                return new SilentWebUI(context)
+                {
+                    OwnerWindow = coreUIParent.OwnerWindow
+                };
             }
 
-            return new InteractiveWebUI(context) { OwnerWindow = coreUIParent.OwnerWindow };
+            return new InteractiveWebUI(context)
+            {
+                OwnerWindow = coreUIParent.OwnerWindow
+            };
         }
     }
 }

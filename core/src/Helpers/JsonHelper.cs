@@ -67,7 +67,7 @@ namespace Microsoft.Identity.Core.Helpers
             }
             catch (System.Runtime.Serialization.SerializationException ex)
             {
-                requestContext.Logger.Warning(CoreExceptionFactory.Instance.GetPiiScrubbedDetails(ex));
+                requestContext.Logger.Warning(InternalCoreExceptionFactory.GetCoreExceptionFactory().GetPiiScrubbedDetails(ex));
                 requestContext.Logger.WarningPii(ex.ToString());
             }
 

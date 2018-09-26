@@ -46,8 +46,12 @@ namespace Microsoft.Identity.Core
 
         private RequestContext _requestContext;
 
-        public TokenCacheAccessor()
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
+
+        public TokenCacheAccessor(ICoreExceptionFactory coreExceptionFactory)
         {
+            _coreExceptionFactory = coreExceptionFactory;
+
             _accessTokenSharedPreference = Application.Context.GetSharedPreferences(AccessTokenSharedPreferenceName,
                     FileCreationMode.Private);
             _refreshTokenSharedPreference = Application.Context.GetSharedPreferences(RefreshTokenSharedPreferenceName,
@@ -60,13 +64,13 @@ namespace Microsoft.Identity.Core
             if (_accessTokenSharedPreference == null || _refreshTokenSharedPreference == null
                 || _idTokenSharedPreference == null || _accountSharedPreference == null)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw _coreExceptionFactory.GetClientException(
                     CoreErrorCodes.FailedToCreateSharedPreference,
                     "Fail to create SharedPreference");
             }
         }
 
-        public TokenCacheAccessor(RequestContext requestContext) : this()
+        public TokenCacheAccessor(ICoreExceptionFactory coreExceptionFactory, RequestContext requestContext) : this(coreExceptionFactory)
         {
             _requestContext = requestContext;
         }

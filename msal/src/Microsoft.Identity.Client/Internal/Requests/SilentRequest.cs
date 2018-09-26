@@ -27,6 +27,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Cache;
 using Microsoft.Identity.Core.Http;
 using Microsoft.Identity.Core.Instance;
@@ -38,9 +39,13 @@ namespace Microsoft.Identity.Client.Internal.Requests
     {
         private MsalRefreshTokenCacheItem _msalRefreshTokenItem;
 
-        public SilentRequest(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery,
+        public SilentRequest(
+            IHttpManager httpManager, 
+            IAuthorityFactory authorityFactory, 
+            IAadInstanceDiscovery aadInstanceDiscovery,
+            ICoreExceptionFactory coreExceptionFactory,
             AuthenticationRequestParameters authenticationRequestParameters, bool forceRefresh)
-            : base(httpManager, authorityFactory, aadInstanceDiscovery, authenticationRequestParameters)
+            : base(httpManager, authorityFactory, aadInstanceDiscovery, coreExceptionFactory, authenticationRequestParameters)
         {
             ForceRefresh = forceRefresh;
         }

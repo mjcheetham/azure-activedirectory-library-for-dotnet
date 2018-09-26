@@ -47,6 +47,10 @@ namespace Microsoft.Identity.Core
         internal readonly IDictionary<string, string> AccountCacheDictionary =
             new ConcurrentDictionary<string, string>();
 
+        public TokenCacheAccessor(ICoreExceptionFactory coreExceptionFactory)
+        {
+        }
+
         public void SaveAccessToken(MsalAccessTokenCacheItem item)
         {
             AccessTokenCacheDictionary[item.GetKey().ToString()] = JsonHelper.SerializeToJson(item);

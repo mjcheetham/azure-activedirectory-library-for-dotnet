@@ -45,11 +45,15 @@ namespace Microsoft.Identity.Core.UI.SystemWebview
     {
         internal static RequestContext RequestContext { get; set; }
 
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
+
         /// <summary>
         /// Default Constructor
         /// </summary>
-        public AuthenticationActivity()
-        { }
+        public AuthenticationActivity(ICoreExceptionFactory coreExceptionFactory)
+        {
+            _coreExceptionFactory = coreExceptionFactory;
+        }
 
         private readonly string _customTabsServiceAction =
             "android.support.customtabs.action.CustomTabsService";
@@ -129,7 +133,7 @@ namespace Microsoft.Identity.Core.UI.SystemWebview
                 if (string.IsNullOrEmpty(chromePackage))
                 {
                     const string chromeNotInstalledMessage = " Chrome is not installed on the device, cannot proceed with authentication";
-                    throw CoreExceptionFactory.Instance.GetClientException(
+                    throw _coreExceptionFactory.GetClientException(
                         CoreErrorCodes.ChromeNotInstalledError, 
                         chromeNotInstalledMessage);
                 }
@@ -145,7 +149,7 @@ namespace Microsoft.Identity.Core.UI.SystemWebview
                 catch (ActivityNotFoundException ex)
                 {
                     const string chromeDisabledMessage = "Chrome is disabled on the device, cannot proceed with authentication ";
-                    throw CoreExceptionFactory.Instance.GetClientException(
+                    throw _coreExceptionFactory.GetClientException(
                         CoreErrorCodes.ChromeDisabledError, 
                         chromeDisabledMessage + ex.InnerException);
                 }
@@ -254,7 +258,7 @@ namespace Microsoft.Identity.Core.UI.SystemWebview
                 }
                 catch (PackageManager.NameNotFoundException exc)
                 {
-                    string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(exc);
+                    string noPiiMsg = _coreExceptionFactory.GetPiiScrubbedDetails(exc);
                     RequestContext.Logger.Error(noPiiMsg);
                     RequestContext.Logger.ErrorPii(exc);
                     // swallow this exception. If the package does not exist then exception will be thrown.

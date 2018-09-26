@@ -59,13 +59,17 @@ namespace Test.MSAL.NET.Unit.CacheTests
         private IAadInstanceDiscovery _aadInstanceDiscovery;
         private IHttpManager _httpManager;
         private IAuthorityFactory _authorityFactory;
+        private ICoreExceptionFactory _coreExceptionFactory;
 
         [TestInitialize]
         public void TestInitialize()
         {
-            _httpManager = new HttpManager(new HttpClientFactory(true));
-            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
-            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
+            _coreExceptionFactory = new TestExceptionFactory();
+            _httpManager = new HttpManager(new HttpClientFactory(false), _coreExceptionFactory);
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(_coreExceptionFactory);
+
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager, _coreExceptionFactory);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery, _coreExceptionFactory);
 
             new TestPlatformInformation();
             _cache = new TokenCache();

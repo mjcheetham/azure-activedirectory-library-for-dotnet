@@ -53,9 +53,11 @@ namespace Microsoft.Identity.Client.Internal.UI
         private AuthorizationResult result;
         private ManualResetEvent threadInitializedEvent;
         private Exception uiException;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
-        public SilentWebUI()
+        public SilentWebUI(ICoreExceptionFactory coreExceptionFactory)
         {
+            _coreExceptionFactory = coreExceptionFactory;
             threadInitializedEvent = new ManualResetEvent(false);
         }
 
@@ -134,7 +136,7 @@ namespace Microsoft.Identity.Client.Internal.UI
                     }
                     catch (Exception e)
                     {
-                        string noPiiMsg = MsalExceptionFactory.GetPiiScrubbedExceptionDetails(e);
+                        string noPiiMsg = _coreExceptionFactory.GetPiiScrubbedDetails(e);
                         RequestContext.Logger.Error(noPiiMsg);
                         RequestContext.Logger.ErrorPii(e);
                         // Catch all exceptions to transfer them to the original calling thread.

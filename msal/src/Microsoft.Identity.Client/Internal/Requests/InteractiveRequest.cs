@@ -49,20 +49,30 @@ namespace Microsoft.Identity.Client.Internal.Requests
         private string _codeVerifier;
         private string _state;
 
-        public InteractiveRequest(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery, 
+        public InteractiveRequest(
+            IHttpManager httpManager, 
+            IAuthorityFactory authorityFactory, 
+            IAadInstanceDiscovery aadInstanceDiscovery, 
+            ICoreExceptionFactory coreExceptionFactory,
             AuthenticationRequestParameters authenticationRequestParameters,
             IEnumerable<string> extraScopesToConsent, UIBehavior UIBehavior, IWebUI webUI)
-            : this(httpManager, authorityFactory, aadInstanceDiscovery,
+            : this(httpManager, authorityFactory, aadInstanceDiscovery, coreExceptionFactory,
                 authenticationRequestParameters, extraScopesToConsent, authenticationRequestParameters.Account?.Username,
                 UIBehavior, webUI)
         {
         }
 
-        public InteractiveRequest(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery, 
+        public InteractiveRequest(
+            IHttpManager httpManager, 
+            IAuthorityFactory authorityFactory, 
+            IAadInstanceDiscovery aadInstanceDiscovery, 
+            ICoreExceptionFactory coreExceptionFactory,
             AuthenticationRequestParameters authenticationRequestParameters,
-            IEnumerable<string> extraScopesToConsent, string loginHint,
-            UIBehavior UIBehavior, IWebUI webUI)
-            : base(httpManager, authorityFactory, aadInstanceDiscovery, authenticationRequestParameters)
+            IEnumerable<string> extraScopesToConsent, 
+            string loginHint,
+            UIBehavior UIBehavior, 
+            IWebUI webUI)
+            : base(httpManager, authorityFactory, aadInstanceDiscovery, coreExceptionFactory, authenticationRequestParameters)
         {
             if (!string.IsNullOrWhiteSpace(authenticationRequestParameters.RedirectUri.Fragment))
             {
@@ -239,7 +249,7 @@ namespace Microsoft.Identity.Client.Internal.Requests
                 authorizationRequestParameters[OAuth2Parameter.CorrelationId] = AuthenticationRequestParameters.RequestContext.Logger.CorrelationId.ToString();
             }
 
-            foreach (var kvp in MsalIdHelper.GetMsalIdParameters())
+            foreach (var kvp in MsalIdHelper.GetMsalIdParameters(CoreExceptionFactory))
             {
                 authorizationRequestParameters[kvp.Key] = kvp.Value;
             }

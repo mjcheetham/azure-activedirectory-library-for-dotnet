@@ -42,7 +42,8 @@ namespace Microsoft.Identity.Core.Instance
         private const string DefaultRealm = "http://schemas.microsoft.com/rel/trusted-realm";
 
         private readonly HashSet<string> _validForDomainsList = new HashSet<string>();
-        public AdfsAuthority(IHttpManager httpManager, string authority, bool validateAuthority) : base(httpManager, authority, validateAuthority)
+        public AdfsAuthority(IHttpManager httpManager, ICoreExceptionFactory coreExceptionFactory, 
+            string authority, bool validateAuthority) : base(httpManager, coreExceptionFactory, authority, validateAuthority)
         {
             AuthorityType = AuthorityType.Adfs;
         }
@@ -51,7 +52,7 @@ namespace Microsoft.Identity.Core.Instance
         {
             if (string.IsNullOrEmpty(userPrincipalName))
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw CoreExceptionFactory.GetClientException(
                     CoreErrorCodes.UpnRequired,
                     CoreErrorMessages.UpnRequiredForAuthroityValidation);
             }
@@ -68,14 +69,14 @@ namespace Microsoft.Identity.Core.Instance
                 DrsMetadataResponse drsResponse = await GetMetadataFromEnrollmentServerAsync(userPrincipalName, requestContext).ConfigureAwait(false);
                 if (!string.IsNullOrEmpty(drsResponse.Error))
                 {
-                    CoreExceptionFactory.Instance.GetServiceException(
+                    CoreExceptionFactory.GetServiceException(
                         drsResponse.Error,
                         drsResponse.ErrorDescription);
                 }
 
                 if (drsResponse.IdentityProviderService?.PassiveAuthEndpoint == null)
                 {
-                    throw CoreExceptionFactory.Instance.GetServiceException(
+                    throw CoreExceptionFactory.GetServiceException(
                         CoreErrorCodes.MissingPassiveAuthEndpoint,
                         CoreErrorMessages.CannotFindTheAuthEndpont);
                 }
@@ -91,20 +92,23 @@ namespace Microsoft.Identity.Core.Instance
 
                 if (httpResponse.StatusCode != HttpStatusCode.OK)
                 {
-                    throw CoreExceptionFactory.Instance.GetServiceException(
+                    throw CoreExceptionFactory.GetServiceException(
                         CoreErrorCodes.InvalidAuthority,
                         CoreErrorMessages.AuthorityValidationFailed);
                 }
 
-                AdfsWebFingerResponse wfr = OAuth2Client.CreateResponse<AdfsWebFingerResponse>(httpResponse, requestContext,
+                AdfsWebFingerResponse wfr = new OAuth2Client(HttpManager, CoreExceptionFactory).CreateResponse<AdfsWebFingerResponse>(
+                    httpResponse, 
+                    requestContext,
                     false);
+
                 if (
                     wfr.Links.FirstOrDefault(
                         a =>
                             (a.Rel.Equals(DefaultRealm, StringComparison.OrdinalIgnoreCase) &&
                              a.Href.Equals(resource, StringComparison.OrdinalIgnoreCase))) == null)
                 {
-                    throw CoreExceptionFactory.Instance.GetServiceException(
+                    throw CoreExceptionFactory.GetServiceException(
                         CoreErrorCodes.InvalidAuthority,
                         CoreErrorMessages.InvalidAuthorityOpenId);
                 }
@@ -143,7 +147,7 @@ namespace Microsoft.Identity.Core.Instance
             catch (Exception exc)
             {
                 const string msg = "On-Premise ADFS enrollment server endpoint lookup failed. Error - ";
-                string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(exc);
+                string noPiiMsg = CoreExceptionFactory.GetPiiScrubbedDetails(exc);
                 requestContext.Logger.Info(msg + noPiiMsg);
                 requestContext.Logger.InfoPii(msg + exc);
             }
@@ -155,7 +159,7 @@ namespace Microsoft.Identity.Core.Instance
 
         private async Task<DrsMetadataResponse> QueryEnrollmentServerEndpointAsync(string endpoint, RequestContext requestContext)
         {
-            OAuth2Client client = new OAuth2Client(HttpManager);
+            OAuth2Client client = new OAuth2Client(HttpManager, CoreExceptionFactory);
             client.AddQueryParameter("api-version", "1.0");
             return await client.ExecuteRequestAsync<DrsMetadataResponse>(new Uri(endpoint), HttpMethod.Get, requestContext).ConfigureAwait(false);
         }

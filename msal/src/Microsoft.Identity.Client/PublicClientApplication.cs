@@ -89,13 +89,18 @@ namespace Microsoft.Identity.Client
         /// </list>
         /// Note that this setting needs to be consistent with what is declared in the application registration portal 
         /// </param>
-        public PublicClientApplication(string clientId, string authority) : this(null, null, null, clientId, authority)
+        public PublicClientApplication(string clientId, string authority) : this(null, null, null, null, clientId, authority)
         {
         }
 
-        internal PublicClientApplication(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery,
-            string clientId, string authority)
-            : base(httpManager, authorityFactory, aadInstanceDiscovery, 
+        internal PublicClientApplication(
+            IHttpManager httpManager, 
+            IAuthorityFactory authorityFactory, 
+            IAadInstanceDiscovery aadInstanceDiscovery,
+            ICoreExceptionFactory coreExceptionFactory, 
+            string clientId, 
+            string authority)
+            : base(httpManager, authorityFactory, aadInstanceDiscovery, coreExceptionFactory,
                   clientId, authority, PlatformPlugin.PlatformInformation.GetDefaultRedirectUri(clientId), true)
         {
             UserTokenCache = new TokenCache()
@@ -444,7 +449,7 @@ namespace Microsoft.Identity.Client
 #endif
 #endif
 
-            return PlatformPlugin.WebUIFactory.CreateAuthenticationDialog(parent.CoreUIParent, requestContext);
+            return PlatformPlugin.WebUIFactory.CreateAuthenticationDialog(CoreExceptionFactory, parent.CoreUIParent, requestContext);
         }
 
         private async Task<AuthenticationResult> AcquireTokenForLoginHintCommonAsync(Authority authority, IEnumerable<string> scopes,
@@ -462,7 +467,15 @@ namespace Microsoft.Identity.Client
 #endif
 
             var handler =
-                new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams, extraScopesToConsent, loginHint, behavior,
+                new InteractiveRequest(
+                    HttpManager, 
+                    AuthorityFactory, 
+                    AadInstanceDiscovery, 
+                    CoreExceptionFactory,
+                    requestParams, 
+                    extraScopesToConsent, 
+                    loginHint, 
+                    behavior,
                     CreateWebAuthenticationDialog(parent, behavior, requestParams.RequestContext))
                 { ApiId = apiId };
             return await handler.RunAsync().ConfigureAwait(false);
@@ -482,7 +495,14 @@ namespace Microsoft.Identity.Client
 #endif
 
             var handler =
-                new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams, extraScopesToConsent, behavior,
+                new InteractiveRequest(
+                    HttpManager, 
+                    AuthorityFactory, 
+                    AadInstanceDiscovery, 
+                    CoreExceptionFactory, 
+                    requestParams, 
+                    extraScopesToConsent, 
+                    behavior,
                     CreateWebAuthenticationDialog(parent, behavior, requestParams.RequestContext))
                 { ApiId = apiId };
             return await handler.RunAsync().ConfigureAwait(false);
@@ -539,7 +559,13 @@ namespace Microsoft.Identity.Client
         {
             Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             var requestParams = CreateRequestParameters(authority, scopes, null, UserTokenCache);
-            var handler = new UsernamePasswordRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams, usernamePasswordInput)
+            var handler = new UsernamePasswordRequest(
+                HttpManager, 
+                AuthorityFactory, 
+                AadInstanceDiscovery, 
+                CoreExceptionFactory, 
+                requestParams, 
+                usernamePasswordInput)
             {
                 ApiId = ApiEvent.ApiIds.AcquireTokenWithScopeUser
             };
@@ -573,7 +599,13 @@ namespace Microsoft.Identity.Client
         {
             Authority authority = AuthorityFactory.CreateAuthority(Authority, ValidateAuthority);
             var requestParams = CreateRequestParameters(authority, scopes, null, UserTokenCache);
-            var handler = new IntegratedWindowsAuthRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams, iwaInput)
+            var handler = new IntegratedWindowsAuthRequest(
+                HttpManager, 
+                AuthorityFactory, 
+                AadInstanceDiscovery, 
+                CoreExceptionFactory,
+                requestParams, 
+                iwaInput)
             {
                 ApiId = ApiEvent.ApiIds.AcquireTokenWithScopeUser
             };

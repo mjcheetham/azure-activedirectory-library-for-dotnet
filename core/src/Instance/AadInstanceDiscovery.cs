@@ -55,10 +55,12 @@ namespace Microsoft.Identity.Core.Instance
     internal class AadInstanceDiscovery : IAadInstanceDiscovery
     {
         private readonly IHttpManager _httpManager;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
-        public AadInstanceDiscovery(IHttpManager httpManager)
+        public AadInstanceDiscovery(IHttpManager httpManager, ICoreExceptionFactory coreExceptionFactory)
         {
             _httpManager = httpManager;
+            _coreExceptionFactory = coreExceptionFactory;
         }
 
         public ConcurrentDictionary<string, InstanceDiscoveryMetadataEntry> Cache { get; } = new ConcurrentDictionary<string, InstanceDiscoveryMetadataEntry>();
@@ -109,7 +111,7 @@ namespace Microsoft.Identity.Core.Instance
 
         private async Task<InstanceDiscoveryResponse> SendInstanceDiscoveryRequestAsync(Uri authority, RequestContext requestContext)
         {
-            OAuth2Client client = new OAuth2Client(_httpManager);
+            OAuth2Client client = new OAuth2Client(_httpManager, _coreExceptionFactory);
             client.AddQueryParameter("api-version", "1.1");
             client.AddQueryParameter("authorization_endpoint", BuildAuthorizeEndpoint(authority.Host, GetTenant(authority)));
 
@@ -127,11 +129,11 @@ namespace Microsoft.Identity.Core.Instance
             return discoveryResponse;
         }
 
-        private static void Validate(InstanceDiscoveryResponse instanceDiscoveryResponse)
+        private void Validate(InstanceDiscoveryResponse instanceDiscoveryResponse)
         {
             if (instanceDiscoveryResponse.TenantDiscoveryEndpoint == null)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(instanceDiscoveryResponse.Error,
+                throw _coreExceptionFactory.GetClientException(instanceDiscoveryResponse.Error,
                      instanceDiscoveryResponse.ErrorDescription);
             }
         }

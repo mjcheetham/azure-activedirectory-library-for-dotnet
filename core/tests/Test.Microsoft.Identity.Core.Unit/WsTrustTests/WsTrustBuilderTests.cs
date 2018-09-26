@@ -52,7 +52,7 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
         [TestInitialize]
         public void TestInitialize()
         {
-            CoreExceptionFactory.Instance = new TestExceptionFactory();
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(new TestExceptionFactory());
         }
 
         [TestMethod]

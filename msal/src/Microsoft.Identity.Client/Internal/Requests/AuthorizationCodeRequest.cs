@@ -35,9 +35,13 @@ namespace Microsoft.Identity.Client.Internal.Requests
 {
     internal class AuthorizationCodeRequest : RequestBase
     {
-        public AuthorizationCodeRequest(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery, 
+        public AuthorizationCodeRequest(
+            IHttpManager httpManager, 
+            IAuthorityFactory authorityFactory, 
+            IAadInstanceDiscovery aadInstanceDiscovery, 
+            ICoreExceptionFactory coreExceptionFactory,
             AuthenticationRequestParameters authenticationRequestParameters)
-            : base(httpManager, authorityFactory, aadInstanceDiscovery, authenticationRequestParameters)
+            : base(httpManager, authorityFactory, aadInstanceDiscovery, coreExceptionFactory, authenticationRequestParameters)
         {
             if (string.IsNullOrWhiteSpace(authenticationRequestParameters.AuthorizationCode))
             {

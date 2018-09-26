@@ -53,7 +53,7 @@ namespace Test.ADAL.NET.Common.Mocks
             webUi.MockResult = authorizationResult;
 
             IWebUIFactory mockFactory = Substitute.For<IWebUIFactory>();
-            mockFactory.CreateAuthenticationDialog(Arg.Any<CoreUIParent>(), Arg.Any<RequestContext>()).Returns(webUi);
+            mockFactory.CreateAuthenticationDialog(InternalCoreExceptionFactory.GetCoreExceptionFactory(), Arg.Any<CoreUIParent>(), Arg.Any<RequestContext>()).Returns(webUi);
             WebUIFactoryProvider.WebUIFactory = mockFactory;
         }
 

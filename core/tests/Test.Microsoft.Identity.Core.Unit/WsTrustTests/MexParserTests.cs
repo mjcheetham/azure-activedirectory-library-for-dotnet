@@ -45,14 +45,16 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
     public class MexParserTests
     {
         private IHttpManager _httpManager;
+        private ICoreExceptionFactory _coreExceptionFactory;
+
         private RequestContext _requestContext;
 
         [TestInitialize]
         public void TestInitialize()
         {
-            _httpManager = new HttpManager(new HttpClientFactory(false));
-
-            CoreExceptionFactory.Instance = new TestExceptionFactory();
+            _coreExceptionFactory = new TestExceptionFactory();
+            _httpManager = new HttpManager(new HttpClientFactory(true), _coreExceptionFactory);
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(_coreExceptionFactory);
             _requestContext = new RequestContext(new TestLogger(Guid.NewGuid()));
         }
 
@@ -69,10 +71,8 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
             }
             Assert.IsNotNull(mexDocument);
 
-            var httpManager = new HttpManager(new HttpClientFactory());
-
             // Act
-            MexParser mexParser = new MexParser(httpManager, UserAuthType.IntegratedAuth, _requestContext);
+            MexParser mexParser = new MexParser(_httpManager, _coreExceptionFactory, UserAuthType.IntegratedAuth, _requestContext);
             WsTrustAddress wsTrustAddress = mexParser.ExtractWsTrustAddressFromMex(mexDocument);
 
             // Assert
@@ -80,7 +80,7 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
             Assert.AreEqual(wsTrustAddress.Version, WsTrustVersion.WsTrust2005);
 
             // Act
-            mexParser = new MexParser(httpManager, UserAuthType.UsernamePassword, _requestContext);
+            mexParser = new MexParser(_httpManager, _coreExceptionFactory, UserAuthType.UsernamePassword, _requestContext);
             wsTrustAddress = mexParser.ExtractWsTrustAddressFromMex(mexDocument);
 
             // Assert
@@ -92,7 +92,6 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
         [Description("Mex endpoint fails to resolve")]
         public async Task MexEndpointFailsToResolveTestAsync()
         {
-            _httpManager = new HttpManager(new HttpClientFactory(true));
             HttpMessageHandlerFactory.ClearMockHandlers();
             HttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler()
             {
@@ -105,7 +104,7 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
 
             try
             {
-                MexParser mexParser = new MexParser(_httpManager, UserAuthType.IntegratedAuth, _requestContext);
+                MexParser mexParser = new MexParser(_httpManager, _coreExceptionFactory, UserAuthType.IntegratedAuth, _requestContext);
                 await mexParser.FetchWsTrustAddressFromMexAsync("http://somehost");
                 Assert.Fail("We expect an exception to be thrown here");
             }
@@ -120,7 +119,6 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
         [Description("Mex endpoint fails to parse")]
         public async Task MexEndpointFailsToParseTestAsync()
         {
-            _httpManager = new HttpManager(new HttpClientFactory(true));
             HttpMessageHandlerFactory.ClearMockHandlers();
             HttpMessageHandlerFactory.AddMockHandler(new MockHttpMessageHandler()
             {
@@ -134,7 +132,7 @@ namespace Test.Microsoft.Identity.Unit.WsTrustTests
             var requestContext = new RequestContext(new TestLogger(Guid.NewGuid(), null));
             try
             {
-                MexParser mexParser = new MexParser(_httpManager, UserAuthType.IntegratedAuth, requestContext);
+                MexParser mexParser = new MexParser(_httpManager, _coreExceptionFactory, UserAuthType.IntegratedAuth, requestContext);
                 await mexParser.FetchWsTrustAddressFromMexAsync("http://somehost");
                 Assert.Fail("We expect an exception to be thrown here");
             }

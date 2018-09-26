@@ -58,6 +58,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
 
         internal Authenticator Authenticator;
         private readonly IHttpManager _httpManager;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
         /// <summary>
         /// Constructor to create the context with the address of the authority.
@@ -110,13 +111,18 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
         {
         }
 
-        internal AuthenticationContext(IHttpManager httpManager, string authority, AuthorityValidationType validateAuthority, TokenCache tokenCache)
+        internal AuthenticationContext(
+            IHttpManager httpManager, 
+            string authority, 
+            AuthorityValidationType validateAuthority, 
+            TokenCache tokenCache)
         {
             // If authorityType is not provided (via first constructor), we validate by default (except for ASG and Office tenants).
             this.Authenticator = new Authenticator(authority, (validateAuthority != AuthorityValidationType.False));
             this.TokenCache = tokenCache;
 
-            _httpManager = httpManager ?? new HttpManager(new HttpClientFactory());
+            _coreExceptionFactory = InternalCoreExceptionFactory.GetCoreExceptionFactory();
+            _httpManager = httpManager ?? new HttpManager(new HttpClientFactory(), _coreExceptionFactory);
         }
 
         /// <summary>
@@ -181,7 +187,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
             {
                 keychainSecurityGroup = value;
                 StorageDelegates.legacyCachePersistance.SetKeychainSecurityGroup(value);
-                TokenCache.tokenCacheAccessor.SetKeychainSecurityGroup(value);
+                TokenCache._tokenCacheAccessor.SetKeychainSecurityGroup(value);
             }
         }
 #endif
@@ -447,7 +453,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
 
         internal IWebUI CreateWebAuthenticationDialog(PlatformParameters parameters)
         {
-            return WebUIFactoryProvider.WebUIFactory.CreateAuthenticationDialog(parameters.GetCoreUIParent(), null);
+            return WebUIFactoryProvider.WebUIFactory.CreateAuthenticationDialog(_coreExceptionFactory, parameters.GetCoreUIParent(), null);
         }
 
         internal async Task<AuthenticationResult> AcquireTokenCommonAsync(
@@ -464,7 +470,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
                 ExtendedLifeTimeEnabled = this.ExtendedLifeTimeEnabled
             };
 
-            var handler = new AcquireTokenUsernamePasswordHandler(_httpManager, requestData, upInput);
+            var handler = new AcquireTokenUsernamePasswordHandler(_httpManager, _coreExceptionFactory, requestData, upInput);
             return await handler.RunAsync().ConfigureAwait(false);
         }
 
@@ -482,7 +488,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
                 ExtendedLifeTimeEnabled = this.ExtendedLifeTimeEnabled
             };
 
-            var handler = new AcquireTokenIWAHandler(_httpManager, requestData, iwaInput);
+            var handler = new AcquireTokenIWAHandler(_httpManager, _coreExceptionFactory, requestData, iwaInput);
             return await handler.RunAsync().ConfigureAwait(false);
         }
 

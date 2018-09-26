@@ -27,6 +27,7 @@
 
 using System.Net.Http;
 using Microsoft.Identity.Client.Internal;
+using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Http;
 using Microsoft.Identity.Core.Instance;
 using Test.Microsoft.Identity.Core.Unit.Mocks;
@@ -52,15 +53,19 @@ namespace Test.MSAL.NET.Unit.RequestsTests
         internal IAadInstanceDiscovery AadInstanceDiscovery { get; private set; }
         internal IHttpManager HttpManager { get; private set; }
         internal IAuthorityFactory AuthorityFactory { get; private set; }
+        internal ICoreExceptionFactory CoreExceptionFactory { get; private set; }
 
         protected void InitializeRequestTests()
         {
+            // TODO: some of this will conflict with other exception factory registration below.
             ModuleInitializer.ForceModuleInitializationTestOnly();
             Authority.ValidatedAuthorities.Clear();
 
-            HttpManager = new HttpManager(new HttpClientFactory(true));
-            AadInstanceDiscovery = new AadInstanceDiscovery(HttpManager);
-            AuthorityFactory = new AuthorityFactory(HttpManager, AadInstanceDiscovery);
+            CoreExceptionFactory = new TestExceptionFactory();
+            HttpManager = new HttpManager(new HttpClientFactory(true), CoreExceptionFactory);
+            AadInstanceDiscovery = new AadInstanceDiscovery(HttpManager, CoreExceptionFactory);
+            AuthorityFactory = new AuthorityFactory(HttpManager, AadInstanceDiscovery, CoreExceptionFactory);
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(CoreExceptionFactory);
 
             HttpMessageHandlerFactory.ClearMockHandlers();
         }

@@ -49,7 +49,7 @@ namespace Microsoft.Identity.Core
 
         private RequestContext _requestContext;
 
-        public TokenCacheAccessor()
+        public TokenCacheAccessor(ICoreExceptionFactory coreExceptionFactory)
         {
             var localSettings = ApplicationData.Current.LocalSettings;
             _accessTokenContainer =
@@ -64,7 +64,7 @@ namespace Microsoft.Identity.Core
                 localSettings.CreateContainer(LocalSettingsAccountContainerName,
                     ApplicationDataCreateDisposition.Always);
         }
-        public TokenCacheAccessor(RequestContext requestContext) : this()
+        public TokenCacheAccessor(ICoreExceptionFactory coreExceptionFactory, RequestContext requestContext) : this(coreExceptionFactory)
         {
             _requestContext = requestContext;
         }

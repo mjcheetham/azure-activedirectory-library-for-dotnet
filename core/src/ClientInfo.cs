@@ -47,11 +47,11 @@ namespace Microsoft.Identity.Core
         [DataMember(Name = ClientInfoClaim.UnqiueTenantIdentifier, IsRequired = false)]
         public string UniqueTenantIdentifier { get; set; }
 
-        public static ClientInfo CreateFromJson(string clientInfo)
+        public static ClientInfo CreateFromJson(ICoreExceptionFactory exceptionFactory, string clientInfo)
         {
             if (string.IsNullOrEmpty(clientInfo))
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw exceptionFactory.GetClientException(
                     CoreErrorCodes.JsonParseError,
                     "client info is null");
             }
@@ -62,7 +62,7 @@ namespace Microsoft.Identity.Core
             }
             catch (Exception exc)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw exceptionFactory.GetClientException(
                      CoreErrorCodes.JsonParseError,
                      "Failed to parse the returned client info.",
                      exc);

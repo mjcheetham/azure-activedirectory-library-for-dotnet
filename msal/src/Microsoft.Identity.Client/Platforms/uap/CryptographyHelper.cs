@@ -105,7 +105,7 @@ namespace Microsoft.Identity.Client
             }
             catch (AggregateException ae)
             {
-                string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(ae);
+                string noPiiMsg = InternalCoreExceptionFactory.GetCoreExceptionFactory().GetPiiScrubbedDetails(ae);
                 CoreLoggerBase.Default.Error(noPiiMsg);
                 CoreLoggerBase.Default.ErrorPii(ae.InnerException);
                 // Any exception thrown as a result of running task will cause AggregateException to be thrown with 

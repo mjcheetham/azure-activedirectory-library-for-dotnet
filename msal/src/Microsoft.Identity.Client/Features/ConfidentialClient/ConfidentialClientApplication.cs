@@ -111,14 +111,22 @@ namespace Microsoft.Identity.Client
         /// enables app developers to create a confidential client application requesting tokens with the default authority.
         public ConfidentialClientApplication(string clientId, string authority, string redirectUri,
             ClientCredential clientCredential, TokenCache userTokenCache, TokenCache appTokenCache)
-            : this(null, null, null, clientId, authority, redirectUri, clientCredential, userTokenCache, appTokenCache)
+            : this(null, null, null, null, clientId, authority, redirectUri, clientCredential, userTokenCache, appTokenCache)
         {
         }
 
-        internal ConfidentialClientApplication(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery,
-            string clientId, string authority, string redirectUri,
-            ClientCredential clientCredential, TokenCache userTokenCache, TokenCache appTokenCache)
-            : base(httpManager, authorityFactory, aadInstanceDiscovery, clientId, authority, redirectUri, true)
+        internal ConfidentialClientApplication(
+            IHttpManager httpManager, 
+            IAuthorityFactory authorityFactory, 
+            IAadInstanceDiscovery aadInstanceDiscovery,
+            ICoreExceptionFactory coreExceptionFactory,
+            string clientId, 
+            string authority, 
+            string redirectUri,
+            ClientCredential clientCredential, 
+            TokenCache userTokenCache, 
+            TokenCache appTokenCache)
+            : base(httpManager, authorityFactory, aadInstanceDiscovery, coreExceptionFactory, clientId, authority, redirectUri, true)
         {
             ClientCredential = clientCredential;
             UserTokenCache = userTokenCache;
@@ -312,7 +320,7 @@ namespace Microsoft.Identity.Client
             requestParameters.ClientId = ClientId;
             requestParameters.ExtraQueryParameters = extraQueryParameters;
 
-            var handler = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
+            var handler = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory,
                 requestParameters, null, loginHint, UIBehavior.SelectAccount, null);
             return await handler.CreateAuthorizationUriAsync().ConfigureAwait(false);
         }
@@ -343,8 +351,16 @@ namespace Microsoft.Identity.Client
             requestParameters.ClientId = ClientId;
             requestParameters.ExtraQueryParameters = extraQueryParameters;
 
-            var handler = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
-                requestParameters, extraScopesToConsent, loginHint, UIBehavior.SelectAccount, null);
+            var handler = new InteractiveRequest(
+                HttpManager, 
+                AuthorityFactory, 
+                AadInstanceDiscovery, 
+                CoreExceptionFactory,
+                requestParameters, 
+                extraScopesToConsent, 
+                loginHint, 
+                UIBehavior.SelectAccount, 
+                null);
             return await handler.CreateAuthorizationUriAsync().ConfigureAwait(false);
         }
 
@@ -358,7 +374,7 @@ namespace Microsoft.Identity.Client
             AuthenticationRequestParameters parameters = CreateRequestParameters(authority, scopes, null, AppTokenCache);
             parameters.IsClientCredentialRequest = true;
             parameters.SendCertificate = sendCertificate;
-            var handler = new ClientCredentialRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters, forceRefresh)
+            var handler = new ClientCredentialRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory, parameters, forceRefresh)
             {
                 ApiId = apiId,
                 IsConfidentialClient = true
@@ -372,7 +388,7 @@ namespace Microsoft.Identity.Client
             var requestParams = CreateRequestParameters(authority, scopes, null, UserTokenCache);
             requestParams.UserAssertion = userAssertion;
             requestParams.SendCertificate = sendCertificate;
-            var handler = new OnBehalfOfRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams)
+            var handler = new OnBehalfOfRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory, requestParams)
             {
                 ApiId = apiId,
                 IsConfidentialClient = true
@@ -388,7 +404,7 @@ namespace Microsoft.Identity.Client
             requestParams.AuthorizationCode = authorizationCode;
             requestParams.RedirectUri = redirectUri;
             requestParams.SendCertificate = sendCertificate;
-            var handler = new AuthorizationCodeRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, requestParams)
+            var handler = new AuthorizationCodeRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory, requestParams)
             {
                 ApiId = apiId,
                 IsConfidentialClient = true

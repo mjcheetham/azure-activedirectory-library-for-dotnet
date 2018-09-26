@@ -179,7 +179,7 @@ namespace Test.ADAL.NET.Unit
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityHomeTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -214,7 +214,7 @@ namespace Test.ADAL.NET.Unit
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityHomeTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -254,7 +254,7 @@ namespace Test.ADAL.NET.Unit
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityHomeTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -300,7 +300,7 @@ namespace Test.ADAL.NET.Unit
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityHomeTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -430,7 +430,7 @@ namespace Test.ADAL.NET.Unit
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityHomeTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.Client,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 ResourceInResponse = TestConstants.DefaultResource,
                 Result = new AdalResult("Bearer", "some-access-token", DateTimeOffset.UtcNow, (DateTimeOffset.UtcNow + TimeSpan.FromMinutes(180)))
@@ -467,7 +467,7 @@ namespace Test.ADAL.NET.Unit
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityCommonTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 ResourceInResponse = TestConstants.DefaultResource,
                 Result = new AdalResult("Bearer", "some-access-token", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
@@ -531,7 +531,7 @@ namespace Test.ADAL.NET.Unit
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityCommonTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 ResourceInResponse = TestConstants.DefaultResource,
                 Result = new AdalResult("Bearer", "some-access-token", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
@@ -581,7 +581,7 @@ namespace Test.ADAL.NET.Unit
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityCommonTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 ResourceInResponse = TestConstants.DefaultResource,
                 Result = new AdalResult("Bearer", "some-access-token", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
@@ -741,7 +741,7 @@ namespace Test.ADAL.NET.Unit
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityHomeTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -818,7 +818,7 @@ namespace Test.ADAL.NET.Unit
             //add simple RT to cache
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAdfsAuthorityTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User, null, null);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 Result = new AdalResult("Bearer", "some-access-token", DateTimeOffset.UtcNow)
@@ -958,7 +958,7 @@ namespace Test.ADAL.NET.Unit
 
             AssertException.TaskThrows<AdalException>(() =>
                 context.AcquireTokenAsync(TestConstants.DefaultResource, credential));
-            Assert.AreEqual(1, cache.tokenCacheDictionary.Count);
+            Assert.AreEqual(1, cache._tokenCacheDictionary.Count);
             // All mocks are consumed
             Assert.AreEqual(0, AdalHttpMessageHandlerFactory.MockHandlersCount());
         }
@@ -1125,7 +1125,7 @@ namespace Test.ADAL.NET.Unit
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityHomeTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -1181,7 +1181,7 @@ namespace Test.ADAL.NET.Unit
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityHomeTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -1286,7 +1286,7 @@ namespace Test.ADAL.NET.Unit
             TokenCache cache = new TokenCache();
             AdalResultWrapper resultEx = TokenCacheTests.CreateCacheValue("id", "user1");
             resultEx.UserAssertionHash = "hash1";
-            cache.tokenCacheDictionary.Add(
+            cache._tokenCacheDictionary.Add(
             new AdalTokenCacheKey("https://login.microsoftonline.com/common/", "resource1", "client1",
                 TokenSubjectType.Client, "id", "user1"), resultEx);
             RequestData data = new RequestData
@@ -1320,7 +1320,7 @@ namespace Test.ADAL.NET.Unit
         {
             TokenCache cache = new TokenCache();
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityCommonTenant, TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User, "unique_id", "displayable@id.com");
-            cache.tokenCacheDictionary[key] = new AdalResultWrapper
+            cache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "something-invalid",
                 ResourceInResponse = TestConstants.DefaultResource,

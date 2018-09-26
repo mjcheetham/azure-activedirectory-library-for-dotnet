@@ -60,10 +60,12 @@ namespace Microsoft.Identity.Core.Http
     internal class HttpManager : IHttpManager
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
-        public HttpManager(IHttpClientFactory httpClientFactory)
+        public HttpManager(IHttpClientFactory httpClientFactory, ICoreExceptionFactory coreExceptionFactory)
         {
             _httpClientFactory = httpClientFactory;
+            _coreExceptionFactory = coreExceptionFactory;
         }
 
         public async Task<HttpResponse> SendPostAsync(Uri endpoint, IDictionary<string, string> headers,
@@ -166,7 +168,7 @@ namespace Microsoft.Identity.Core.Http
             }
             catch (TaskCanceledException exception)
             {
-                string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(exception);
+                string noPiiMsg = _coreExceptionFactory.GetPiiScrubbedDetails(exception);
                 requestContext.Logger.Error(noPiiMsg);
                 requestContext.Logger.ErrorPii(exception);
                 isRetryable = true;
@@ -196,7 +198,7 @@ namespace Microsoft.Identity.Core.Http
                 requestContext.Logger.InfoPii(message);
                 if (toThrow != null)
                 {
-                    throw CoreExceptionFactory.Instance.GetServiceException(
+                    throw _coreExceptionFactory.GetServiceException(
                         CoreErrorCodes.RequestTimeout,
                         "Request to the endpoint timed out.",
                         toThrow);
@@ -207,7 +209,7 @@ namespace Microsoft.Identity.Core.Http
                     return response;
                 }
 
-                throw CoreExceptionFactory.Instance.GetServiceException(
+                throw _coreExceptionFactory.GetServiceException(
                         CoreErrorCodes.ServiceNotAvailable,
                         "Service is unavailable to process the request",
                         null,

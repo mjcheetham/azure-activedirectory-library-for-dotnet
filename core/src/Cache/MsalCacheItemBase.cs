@@ -44,10 +44,11 @@ namespace Microsoft.Identity.Core.Cache
         [DataMember(Name = "client_info")]
         internal string RawClientInfo { get; set; }
 
-        internal ClientInfo ClientInfo {
-            get {
-                return RawClientInfo != null ? 
-                    ClientInfo.CreateFromJson(RawClientInfo) : null;
+        internal ClientInfo ClientInfo
+        {
+            get
+            {
+                return RawClientInfo != null ? ClientInfo.CreateFromJson(InternalCoreExceptionFactory.GetCoreExceptionFactory(), RawClientInfo) : null;
             }
         }
 

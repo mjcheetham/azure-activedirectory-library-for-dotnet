@@ -43,6 +43,10 @@ namespace Microsoft.Identity.Core.Cache
             return NSBundle.MainBundle.BundleIdentifier;
         }
 
+        public LegacyCachePersistance(ICoreExceptionFactory coreExceptionFactory)
+        {
+        }
+
         public void SetKeychainSecurityGroup(string keychainSecurityGroup)
         {
             if (keychainSecurityGroup == null)
@@ -86,7 +90,7 @@ namespace Microsoft.Identity.Core.Cache
             catch (Exception ex)
             {
                 string msg = "Failed to load adal cache: ";
-                string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(ex);
+                string noPiiMsg = InternalCoreExceptionFactory.GetCoreExceptionFactory().GetPiiScrubbedDetails(ex);
                 CoreLoggerBase.Default.Warning(msg + noPiiMsg);
                 CoreLoggerBase.Default.WarningPii(msg + ex);
                 // Ignore as the cache seems to be corrupt
@@ -137,7 +141,7 @@ namespace Microsoft.Identity.Core.Cache
             catch (Exception ex)
             {
                 string msg = "Failed to save adal cache: ";
-                string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(ex);
+                string noPiiMsg = InternalCoreExceptionFactory.GetCoreExceptionFactory().GetPiiScrubbedDetails(ex);
                 CoreLoggerBase.Default.Warning(msg + noPiiMsg);
                 CoreLoggerBase.Default.WarningPii(msg + ex);
             }

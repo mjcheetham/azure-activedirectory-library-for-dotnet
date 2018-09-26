@@ -30,16 +30,20 @@ namespace Microsoft.Identity.Core.Cache
 {
     internal class LegacyCachePersistance : ILegacyCachePersistance
     {
-        private byte[] data;
+        private byte[] _data;
+
+        public LegacyCachePersistance(ICoreExceptionFactory coreExceptionFactory)
+        {
+        }
 
         byte[] ILegacyCachePersistance.LoadCache()
         {
-            return data;
+            return _data;
         }
 
         void ILegacyCachePersistance.WriteCache(byte[] serializedCache)
         {
-            data = serializedCache;
+            _data = serializedCache;
         }
     }
 }

@@ -33,13 +33,13 @@ using System.Text;
 namespace Microsoft.IdentityModel.Clients.ActiveDirectory
 {
     /// <summary>
-    /// Implementation of the <see cref="CoreExceptionFactory"/> that throws <see cref="AdalException"/>
+    /// Implementation of the <see cref="ICoreExceptionFactory"/> that throws <see cref="AdalException"/>
     /// </summary>
     /// <remarks>Does not currently throw <see cref="AdalSilentTokenAcquisitionException"/> and 
     /// <see cref="AdalUserMismatchException"/></remarks>
-    internal class AdalExceptionFactory : CoreExceptionFactory
+    internal class AdalExceptionFactory : ICoreExceptionFactory
     {
-        public override Exception GetClientException(
+        public Exception GetClientException(
             string errorCode, 
             string errorMessage, 
             Exception innerException = null)
@@ -48,17 +48,17 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
             return new AdalException(errorCode, errorMessage);
         }
       
-        public override Exception GetServiceException(string errorCode, string errorMessage)
+        public Exception GetServiceException(string errorCode, string errorMessage)
         {
             return GetServiceException(errorCode, errorMessage, null);
         }
 
-        public override Exception GetServiceException(string errorCode, string errorMessage, ExceptionDetail exceptionDetail = null)
+        public Exception GetServiceException(string errorCode, string errorMessage, ExceptionDetail exceptionDetail = null)
         {
             return GetServiceException(errorCode, errorMessage, null, exceptionDetail);
         }
 
-        public override Exception GetServiceException(
+        public Exception GetServiceException(
             string errorCode, 
             string errorMessage, 
             Exception innerException = null, 
@@ -77,13 +77,13 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
                 innerException);
         }
 
-        public override Exception GetUiRequiredException(string errorCode, string errorMessage, Exception innerException = null, ExceptionDetail exceptionDetail = null)
+        public Exception GetUiRequiredException(string errorCode, string errorMessage, Exception innerException = null, ExceptionDetail exceptionDetail = null)
         {
             // Adal does not define a specific ui required exception
             return GetClientException(errorCode, errorMessage, innerException);
         }
 
-        public override string GetPiiScrubbedDetails(Exception ex)
+        public string GetPiiScrubbedDetails(Exception ex)
         {
             return GetPiiScrubbedExceptionDetails(ex);
         }
@@ -121,7 +121,6 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
 
             return sb.ToString();
         }
-
 
         private static void ValidateRequiredArgs(string errorCode, string errorMessage)
         {

@@ -66,6 +66,7 @@ namespace Microsoft.Identity.Core
     /// </summary>
     internal static class MsalIdHelper
     {
+        // TODO: convert the MsalIdHelper class to be not static...
         private static CorePlatformInformationBase corePlatformInformationBaseInstance;
 
         static MsalIdHelper()
@@ -73,11 +74,11 @@ namespace Microsoft.Identity.Core
             corePlatformInformationBaseInstance = CorePlatformInformationBase.Instance;
         }
 
-        public static IDictionary<string, string> GetMsalIdParameters()
+        public static IDictionary<string, string> GetMsalIdParameters(ICoreExceptionFactory coreExceptionFactory)
         {
             if (corePlatformInformationBaseInstance == null)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(CoreErrorCodes.PlatformNotSupported, CoreErrorMessages.PlatformNotSupported);
+                throw coreExceptionFactory.GetClientException(CoreErrorCodes.PlatformNotSupported, CoreErrorMessages.PlatformNotSupported);
             }
             var parameters = new Dictionary<string, string>
             {

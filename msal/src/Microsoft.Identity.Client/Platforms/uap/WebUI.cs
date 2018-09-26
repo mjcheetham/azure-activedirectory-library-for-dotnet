@@ -38,15 +38,17 @@ namespace Microsoft.Identity.Client.Internal.UI
 {
     internal class WebUI : IWebUI
     {
-        private readonly bool useCorporateNetwork;
-        private readonly bool silentMode;
+        private readonly bool _useCorporateNetwork;
+        private readonly bool _silentMode;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
         public RequestContext RequestContext { get; set; }
 
-        public WebUI(CoreUIParent parent, RequestContext requestContext)
+        public WebUI(ICoreExceptionFactory coreExceptionFactory, CoreUIParent parent, RequestContext requestContext)
         {
-            useCorporateNetwork = parent.UseCorporateNetwork;
-            silentMode = parent.UseHiddenBrowser;
+            _coreExceptionFactory = coreExceptionFactory;
+            _useCorporateNetwork = parent.UseCorporateNetwork;
+            _silentMode = parent.UseHiddenBrowser;
         }
 
         public async Task<AuthorizationResult> AcquireAuthorizationAsync(Uri authorizationUri, Uri redirectUri,
@@ -55,13 +57,13 @@ namespace Microsoft.Identity.Client.Internal.UI
             bool ssoMode = ReferenceEquals(redirectUri, Constants.SsoPlaceHolderUri);
 
             WebAuthenticationResult webAuthenticationResult;
-            WebAuthenticationOptions options = (useCorporateNetwork &&
+            WebAuthenticationOptions options = (_useCorporateNetwork &&
                                                 (ssoMode || redirectUri.Scheme == Constants.MsAppScheme))
                 ? WebAuthenticationOptions.UseCorporateNetwork
                 : WebAuthenticationOptions.None;
 
             ThrowOnNetworkDown();
-            if (silentMode)
+            if (_silentMode)
             {
                 options |= WebAuthenticationOptions.SilentMode;
             }
@@ -91,7 +93,7 @@ namespace Microsoft.Identity.Client.Internal.UI
 
             catch (Exception ex)
             {
-                string noPiiMsg = MsalExceptionFactory.GetPiiScrubbedExceptionDetails(ex);
+                string noPiiMsg = _coreExceptionFactory.GetPiiScrubbedDetails(ex);
                 requestContext.Logger.Error(noPiiMsg);
                 requestContext.Logger.ErrorPii(ex);
                 throw new MsalException(MsalClientException.AuthenticationUiFailedError, "WAB authentication failed",

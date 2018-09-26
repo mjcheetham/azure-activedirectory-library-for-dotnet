@@ -82,15 +82,15 @@ namespace Test.MSAL.NET.Unit.RequestsTests
                 RequestContext = new RequestContext(new MsalLogger(Guid.NewGuid(), null))
             };
             
-            SilentRequest request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters, false);
+            SilentRequest request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory, parameters, false);
             Assert.IsNotNull(request);
 
             parameters.Account = new Account(TestConstants.UserIdentifier, TestConstants.DisplayableId, null);
 
-            request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters, false);
+            request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory, parameters, false);
             Assert.IsNotNull(request);
 
-            request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters, false);
+            request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory, parameters, false);
             Assert.IsNotNull(request);
         }
 
@@ -123,7 +123,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
                 ResponseMessage = MockHelpers.CreateSuccessTokenResponseMessage()
             });
 
-            SilentRequest request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters, false);
+            SilentRequest request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory, parameters, false);
             Task<AuthenticationResult> task = request.RunAsync();
             AuthenticationResult result = task.Result;
             Assert.IsNotNull(result);
@@ -155,7 +155,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
 
             try
             {
-                SilentRequest request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters, false);
+                SilentRequest request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory, parameters, false);
                 Task<AuthenticationResult> task = request.RunAsync();
                 var authenticationResult = task.Result;
                 Assert.Fail("MsalUiRequiredException should be thrown here");
@@ -192,7 +192,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
 
             try
             {
-                SilentRequest request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters, false);
+                SilentRequest request = new SilentRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory, parameters, false);
                 Task<AuthenticationResult> task = request.RunAsync();
                 var authenticationResult = task.Result;
                 Assert.Fail("MsalUiRequiredException should be thrown here");

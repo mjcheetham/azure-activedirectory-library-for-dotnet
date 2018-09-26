@@ -42,17 +42,18 @@ namespace Microsoft.Identity.Core.OAuth2
     internal class OAuth2Client
     {
         private readonly Dictionary<string, string> _bodyParameters = new Dictionary<string, string>();
-
-        private readonly Dictionary<string, string> _headers =
-            new Dictionary<string, string>(MsalIdHelper.GetMsalIdParameters());
-
+        private readonly Dictionary<string, string> _headers;
         private readonly Dictionary<string, string> _queryParameters = new Dictionary<string, string>();
 
         private readonly IHttpManager _httpManager;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
-        public OAuth2Client(IHttpManager httpManager)
+        public OAuth2Client(IHttpManager httpManager, ICoreExceptionFactory coreExceptionFactory)
         {
             _httpManager = httpManager;
+            _coreExceptionFactory = coreExceptionFactory;
+
+            _headers = new Dictionary<string, string>(MsalIdHelper.GetMsalIdParameters(_coreExceptionFactory));
         }
 
         public void AddQueryParameter(string key, string value)
@@ -115,7 +116,7 @@ namespace Microsoft.Identity.Core.OAuth2
             return CreateResponse<T>(response, requestContext, addCorrelationId);
         }
 
-        public static T CreateResponse<T>(HttpResponse response, RequestContext requestContext, bool addCorrelationId)
+        public T CreateResponse<T>(HttpResponse response, RequestContext requestContext, bool addCorrelationId)
         {
             if (response.StatusCode != HttpStatusCode.OK)
             {
@@ -130,7 +131,7 @@ namespace Microsoft.Identity.Core.OAuth2
             return JsonHelper.DeserializeFromJson<T>(response.Body);
         }
 
-        public static void CreateErrorResponse(HttpResponse response, RequestContext requestContext)
+        private void CreateErrorResponse(HttpResponse response, RequestContext requestContext)
         {
             Exception serviceEx;
             try
@@ -140,7 +141,7 @@ namespace Microsoft.Identity.Core.OAuth2
                 if (CoreErrorCodes.InvalidGrantError.Equals(msalTokenResponse.Error,
                     StringComparison.OrdinalIgnoreCase))
                 {
-                    throw CoreExceptionFactory.Instance.GetUiRequiredException(
+                    throw _coreExceptionFactory.GetUiRequiredException(
                         CoreErrorCodes.InvalidGrantError,
                         msalTokenResponse.ErrorDescription,
                         null,
@@ -150,7 +151,7 @@ namespace Microsoft.Identity.Core.OAuth2
                          });
                 }
 
-                serviceEx = CoreExceptionFactory.Instance.GetServiceException(
+                serviceEx = _coreExceptionFactory.GetServiceException(
                     msalTokenResponse.Error,
                     msalTokenResponse.ErrorDescription,
                     null,
@@ -163,13 +164,13 @@ namespace Microsoft.Identity.Core.OAuth2
             }
             catch (SerializationException)
             {
-                serviceEx = CoreExceptionFactory.Instance.GetServiceException(
+                serviceEx = _coreExceptionFactory.GetServiceException(
                     CoreErrorCodes.UnknownError,
                     response.Body,
                     new ExceptionDetail() { StatusCode = (int)response.StatusCode });
             }
 
-            string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(serviceEx);
+            string noPiiMsg = _coreExceptionFactory.GetPiiScrubbedDetails(serviceEx);
             requestContext.Logger.Error(noPiiMsg);
             requestContext.Logger.ErrorPii(serviceEx);
             throw serviceEx;

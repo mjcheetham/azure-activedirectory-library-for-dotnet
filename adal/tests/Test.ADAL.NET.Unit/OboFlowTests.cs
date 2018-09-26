@@ -131,7 +131,7 @@ namespace Test.ADAL.NET.Unit
 
             //assertion hash should be stored in the cache entry.
             Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken),
-                context.TokenCache.tokenCacheDictionary.Values.First(x => x.UserAssertionHash != null).UserAssertionHash);
+                context.TokenCache._tokenCacheDictionary.Values.First(x => x.UserAssertionHash != null).UserAssertionHash);
         }
 
         [TestMethod]
@@ -194,7 +194,7 @@ namespace Test.ADAL.NET.Unit
 
             //assertion hash should be stored in the cache entry.
             Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken),
-                context.TokenCache.tokenCacheDictionary.Values.First(x => x.UserAssertionHash != null).UserAssertionHash);
+                context.TokenCache._tokenCacheDictionary.Values.First(x => x.UserAssertionHash != null).UserAssertionHash);
         }
 
         [TestMethod]
@@ -210,7 +210,7 @@ namespace Test.ADAL.NET.Unit
                     TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                     cachenoise + TestConstants.DefaultUniqueId, cachenoise + TestConstants.DefaultDisplayableId);
                 //cache entry has no user assertion hash
-                context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+                context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
                 {
                     RefreshToken = cachenoise + "some-rt",
                     ResourceInResponse = TestConstants.DefaultResource,
@@ -262,7 +262,7 @@ namespace Test.ADAL.NET.Unit
 
             //assertion hash should be stored in the cache entry.
             Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken),
-                context.TokenCache.tokenCacheDictionary.Values.First(x => x.UserAssertionHash != null)
+                context.TokenCache._tokenCacheDictionary.Values.First(x => x.UserAssertionHash != null)
                     .UserAssertionHash);
         }
 
@@ -281,7 +281,7 @@ namespace Test.ADAL.NET.Unit
                     TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                     cachenoise + TestConstants.DefaultUniqueId, cachenoise + TestConstants.DefaultDisplayableId);
 
-                context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+                context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
                 {
                     RefreshToken = cachenoise + "some-rt",
                     ResourceInResponse = TestConstants.DefaultResource,
@@ -393,7 +393,7 @@ namespace Test.ADAL.NET.Unit
                     TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                     cachenoise + TestConstants.DefaultUniqueId, cachenoise + TestConstants.DefaultDisplayableId);
 
-                context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+                context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
                 {
                     RefreshToken = cachenoise + "some-rt",
                     ResourceInResponse = TestConstants.DefaultResource,
@@ -429,7 +429,7 @@ namespace Test.ADAL.NET.Unit
 
             //assertion hash should be stored in the cache entry.
             Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken),
-                context.TokenCache.tokenCacheDictionary.Values.First().UserAssertionHash);
+                context.TokenCache._tokenCacheDictionary.Values.First().UserAssertionHash);
         }
 
         [TestMethod]
@@ -549,7 +549,7 @@ namespace Test.ADAL.NET.Unit
 
             //assertion hash should be stored in the cache entry.
             Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken),
-                context.TokenCache.tokenCacheDictionary.Values.First().UserAssertionHash);
+                context.TokenCache._tokenCacheDictionary.Values.First().UserAssertionHash);
         }
 
         [TestMethod]
@@ -608,7 +608,7 @@ namespace Test.ADAL.NET.Unit
 
             //assertion hash should be stored in the cache entry.
             Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken),
-                context.TokenCache.tokenCacheDictionary.Values.First().UserAssertionHash);
+                context.TokenCache._tokenCacheDictionary.Values.First().UserAssertionHash);
         }
 
         [TestMethod]
@@ -621,7 +621,7 @@ namespace Test.ADAL.NET.Unit
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
             //cache entry has no user assertion hash
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -672,7 +672,7 @@ namespace Test.ADAL.NET.Unit
 
             //assertion hash should be stored in the cache entry.
             Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken),
-                context.TokenCache.tokenCacheDictionary.Values.First(
+                context.TokenCache._tokenCacheDictionary.Values.First(
                     s => s.Result.UserInfo != null && s.Result.UserInfo.DisplayableId.Equals(displayableId2, StringComparison.OrdinalIgnoreCase))
                     .UserAssertionHash);
         }
@@ -689,7 +689,7 @@ namespace Test.ADAL.NET.Unit
 
             //cache entry has user assertion hash
             string tokenInCache = "obo-access-token";
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -724,7 +724,7 @@ namespace Test.ADAL.NET.Unit
 
             //assertion hash should be stored in the cache entry.
             Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken),
-                context.TokenCache.tokenCacheDictionary.Values.First().UserAssertionHash);
+                context.TokenCache._tokenCacheDictionary.Values.First().UserAssertionHash);
         }
 
         [TestMethod]
@@ -785,7 +785,7 @@ namespace Test.ADAL.NET.Unit
 
             //assertion hash should be stored in the cache entry.
             Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken),
-                context.TokenCache.tokenCacheDictionary.Values.First().UserAssertionHash);
+                context.TokenCache._tokenCacheDictionary.Values.First().UserAssertionHash);
         }
 
 
@@ -801,7 +801,7 @@ namespace Test.ADAL.NET.Unit
 
             //cache entry has user assertion hash
             string tokenInCache = "obo-access-token";
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -836,7 +836,7 @@ namespace Test.ADAL.NET.Unit
 
             //assertion hash should be stored in the cache entry.
             Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken),
-                context.TokenCache.tokenCacheDictionary.Values.First().UserAssertionHash);
+                context.TokenCache._tokenCacheDictionary.Values.First().UserAssertionHash);
         }
 
         [TestMethod]
@@ -897,7 +897,7 @@ namespace Test.ADAL.NET.Unit
 
             //assertion hash should be stored in the cache entry.
             Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken),
-                context.TokenCache.tokenCacheDictionary.Values.First().UserAssertionHash);
+                context.TokenCache._tokenCacheDictionary.Values.First().UserAssertionHash);
         }
 
         [TestMethod]
@@ -912,7 +912,7 @@ namespace Test.ADAL.NET.Unit
 
             //cache entry has user assertion hash
             string tokenInCache = "obo-access-token";
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -958,7 +958,7 @@ namespace Test.ADAL.NET.Unit
             Assert.AreEqual(2, context.TokenCache.Count);
 
             //assertion hash should be stored in the cache entry.
-            foreach (var value in context.TokenCache.tokenCacheDictionary.Values)
+            foreach (var value in context.TokenCache._tokenCacheDictionary.Values)
             {
                 Assert.AreEqual(CoreCryptographyHelpers.CreateSha256Hash(accessToken), value.UserAssertionHash);
             }

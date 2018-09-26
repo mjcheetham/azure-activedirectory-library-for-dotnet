@@ -317,9 +317,11 @@ namespace Test.ADAL.NET.Unit
                 ExtendedLifeTimeEnabled = false
             };
 
+            var exFact = new AdalExceptionFactory();
             var privateObject = new PrivateObject(
                 new AcquireTokenUsernamePasswordHandler(
-                    new HttpManager(new HttpClientFactory(true)),
+                    new HttpManager(new HttpClientFactory(true), exFact),
+                    exFact,
                     requestData, 
                     new UsernamePasswordInput("johndoe@contoso.com", "fakepassword")));
 

@@ -27,6 +27,7 @@
 
 using Microsoft.Identity.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Test.Microsoft.Identity.Core.Unit.Mocks;
 
 namespace Test.Microsoft.Identity.Core.Unit
 {
@@ -37,7 +38,7 @@ namespace Test.Microsoft.Identity.Core.Unit
         [TestCategory("ClientInfoTests")]
         public void ParseTest()
         {
-            ClientInfo clientInfo = ClientInfo.CreateFromJson("eyJ1aWQiOiJteS11aWQiLCJ1dGlkIjoibXktdXRpZCJ9");
+            ClientInfo clientInfo = ClientInfo.CreateFromJson(new TestExceptionFactory(), "eyJ1aWQiOiJteS11aWQiLCJ1dGlkIjoibXktdXRpZCJ9");
             Assert.IsNotNull(clientInfo);
             Assert.AreEqual(TestConstants.Uid, clientInfo.UniqueObjectIdentifier);
             Assert.AreEqual(TestConstants.Utid, clientInfo.UniqueTenantIdentifier);

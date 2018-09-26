@@ -33,7 +33,7 @@ namespace Microsoft.Identity.Client.Internal.UI
 {
     internal class WebUIFactory : IWebUIFactory
     {
-        public IWebUI CreateAuthenticationDialog(CoreUIParent parent, RequestContext requestContext)
+        public IWebUI CreateAuthenticationDialog(ICoreExceptionFactory coreExceptionFactory, CoreUIParent parent, RequestContext requestContext)
         {
             throw new NotImplementedException();
         }

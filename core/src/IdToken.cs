@@ -72,7 +72,8 @@ namespace Microsoft.Identity.Core
         [DataMember(Name = IdTokenClaim.HomeObjectId, IsRequired = false)]
         public string HomeObjectId { get; set; }
 
-        public static IdToken Parse(string idToken)
+        // TODO: create an IdTokenParser class and leave the data structure a pure property bag.
+        public static IdToken Parse(ICoreExceptionFactory coreExceptionFactory, string idToken)
         {
             if (string.IsNullOrEmpty(idToken))
             {
@@ -84,7 +85,7 @@ namespace Microsoft.Identity.Core
 
             if (idTokenSegments.Length < 2)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw coreExceptionFactory.GetClientException(
                     CoreErrorCodes.InvalidJwtError,
                     CoreErrorMessages.IDTokenMustHaveTwoParts);
             }
@@ -100,7 +101,7 @@ namespace Microsoft.Identity.Core
             }
             catch (Exception exc)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw coreExceptionFactory.GetClientException(
                     CoreErrorCodes.JsonParseError,
                     CoreErrorMessages.FailedToParseIDToken, 
                     exc);

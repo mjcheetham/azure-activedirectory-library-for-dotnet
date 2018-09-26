@@ -34,11 +34,13 @@ namespace Microsoft.Identity.Core.UI.EmbeddedWebview
 {
     internal class EmbeddedWebUI : WebviewBase
     {
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
         private readonly CoreUIParent _coreUIParent;
         public RequestContext RequestContext { get; internal set; }
 
-        public EmbeddedWebUI(CoreUIParent coreUIParent)
+        public EmbeddedWebUI(ICoreExceptionFactory coreExceptionFactory, CoreUIParent coreUIParent)
         {
+            _coreExceptionFactory = coreExceptionFactory;
             _coreUIParent = coreUIParent;
         }
 
@@ -55,7 +57,7 @@ namespace Microsoft.Identity.Core.UI.EmbeddedWebview
             }
             catch (Exception ex)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw _coreExceptionFactory.GetClientException(
                     CoreErrorCodes.AuthenticationUiFailedError, 
                     "AuthenticationActivity failed to start", 
                     ex);

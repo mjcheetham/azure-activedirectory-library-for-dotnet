@@ -30,39 +30,54 @@ using System;
 namespace Microsoft.Identity.Core
 {
     /// <summary>
-    /// Abstract factory for spewing exceptions for Adal and Msal. Use the <see cref="Instance"/>
+    /// Factory for exceptions for Adal and Msal. Use the <see cref="Instance"/>
     /// singleton to access an actual implementation which will have been injected.
     /// </summary>
-    internal abstract class CoreExceptionFactory
+    internal interface ICoreExceptionFactory
     {
-        public static CoreExceptionFactory Instance { get; set; }
-
-        public abstract Exception GetClientException(
+        Exception GetClientException(
             string errorCode,
             string errorMessage,
             Exception innerException = null);
 
-        public abstract Exception GetServiceException(
+        Exception GetServiceException(
             string errorCode,
             string errorMessage);
 
-        public abstract Exception GetServiceException(
+        Exception GetServiceException(
            string errorCode,
            string errorMessage,
            ExceptionDetail exceptionDetail = null);
 
-        public abstract Exception GetServiceException(
-           string errorCode,
-           string errorMessage,
-           Exception innerException = null,
-           ExceptionDetail exceptionDetail = null);
-
-        public abstract Exception GetUiRequiredException(
+        Exception GetServiceException(
            string errorCode,
            string errorMessage,
            Exception innerException = null,
            ExceptionDetail exceptionDetail = null);
 
-        public abstract string GetPiiScrubbedDetails(Exception exception);
+        Exception GetUiRequiredException(
+           string errorCode,
+           string errorMessage,
+           Exception innerException = null,
+           ExceptionDetail exceptionDetail = null);
+
+        string GetPiiScrubbedDetails(Exception exception);
+    }
+
+    // TODO: see if we can fully get rid of this, but we have to initialize this conditionally,
+    // and can't pass it as a parameter to public classes.  Need to figure this out.
+    internal static class InternalCoreExceptionFactory
+    {
+        private static ICoreExceptionFactory _coreExceptionFactory;
+
+        public static void InitializeCoreExceptionFactory(ICoreExceptionFactory coreExceptionFactory)
+        {
+            _coreExceptionFactory = coreExceptionFactory;
+        }
+
+        public static ICoreExceptionFactory GetCoreExceptionFactory()
+        {
+            return _coreExceptionFactory;
+        }
     }
 }

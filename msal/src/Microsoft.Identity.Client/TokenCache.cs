@@ -62,11 +62,20 @@ namespace Microsoft.Identity.Client
             ModuleInitializer.EnsureModuleInitialized();
         }
 
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
+
+        public TokenCache()
+        {
+            _coreExceptionFactory = InternalCoreExceptionFactory.GetCoreExceptionFactory();
+            legacyCachePersistance = new LegacyCachePersistance(_coreExceptionFactory);
+            tokenCacheAccessor = new TelemetryTokenCacheAccessor(_coreExceptionFactory);
+        }
+
         private const int DefaultExpirationBufferInMinutes = 5;
 
-        internal readonly TelemetryTokenCacheAccessor tokenCacheAccessor = new TelemetryTokenCacheAccessor();
+        internal readonly TelemetryTokenCacheAccessor tokenCacheAccessor;
 
-        internal ILegacyCachePersistance legacyCachePersistance = new LegacyCachePersistance();
+        internal ILegacyCachePersistance legacyCachePersistance;
 
         /// <summary>
         /// Notification for certain token cache interactions during token acquisition. This delegate is 
@@ -131,7 +140,7 @@ namespace Microsoft.Identity.Client
             var tenantId = authorityFactory.CreateAuthority(requestParams.TenantUpdatedCanonicalAuthority, false)
                 .GetTenantId();
 
-            IdToken idToken = IdToken.Parse(response.IdToken);
+            IdToken idToken = IdToken.Parse(_coreExceptionFactory, response.IdToken);
 
             //The preferred_username value cannot be null or empty in order to comply with the ADAL/MSAL Unified cache schema. 
             //It will be set to "preferred_username not in idtoken" 
@@ -187,7 +196,12 @@ namespace Microsoft.Identity.Client
                     {
                         tokenCacheAccessor.SaveIdToken(msalIdTokenCacheItem, requestParams.RequestContext);
 
-                        var msalAccountCacheItem = new MsalAccountCacheItem(preferredEnvironmentHost, response, preferredUsername, tenantId);
+                        var msalAccountCacheItem = new MsalAccountCacheItem(
+                            _coreExceptionFactory,
+                            preferredEnvironmentHost, 
+                            response, 
+                            preferredUsername, 
+                            tenantId);
 
                         tokenCacheAccessor.SaveAccount(msalAccountCacheItem, requestParams.RequestContext);
                     }
@@ -207,7 +221,7 @@ namespace Microsoft.Identity.Client
                     if (!requestParams.IsClientCredentialRequest && !requestParams.Authority.AuthorityType.Equals(Core.Instance.AuthorityType.B2C))
                     {
                         CacheFallbackOperations.WriteAdalRefreshToken
-                            (legacyCachePersistance, msalRefreshTokenCacheItem, msalIdTokenCacheItem,
+                            (_coreExceptionFactory, legacyCachePersistance, msalRefreshTokenCacheItem, msalIdTokenCacheItem,
                             Authority.UpdateHost(requestParams.TenantUpdatedCanonicalAuthority, preferredEnvironmentHost),
                             msalIdTokenCacheItem.IdToken.ObjectId, response.Scope);
                     }
@@ -535,6 +549,7 @@ namespace Microsoft.Identity.Client
                         return null;
                     }
                     return CacheFallbackOperations.GetAdalEntryForMsal(
+                        _coreExceptionFactory,
                         legacyCachePersistance,
                         preferredEnvironmentHost,
                         environmentAliases,
@@ -759,7 +774,7 @@ namespace Microsoft.Identity.Client
                 ICollection<MsalRefreshTokenCacheItem> tokenCacheItems = GetAllRefreshTokensForClient(requestContext);
                 ICollection<MsalAccountCacheItem> accountCacheItems = GetAllAccounts(requestContext);
 
-                var tuple = CacheFallbackOperations.GetAllAdalUsersForMsal(legacyCachePersistance, environmentAliases, ClientId);
+                var tuple = CacheFallbackOperations.GetAllAdalUsersForMsal(_coreExceptionFactory, legacyCachePersistance, environmentAliases, ClientId);
                 OnAfterAccess(args);
 
                 IDictionary<string, Account> clientInfoToAccountMap = new Dictionary<string, Account>();
@@ -785,7 +800,7 @@ namespace Microsoft.Identity.Client
 
                 foreach (KeyValuePair<string, AdalUserInfo> pair in clientInfoToAdalUserMap)
                 {
-                    ClientInfo clientInfo = ClientInfo.CreateFromJson(pair.Key);
+                    ClientInfo clientInfo = ClientInfo.CreateFromJson(_coreExceptionFactory, pair.Key);
                     string accountIdentifier = clientInfo.ToAccountIdentifier();
 
                     if (!clientInfoToAccountMap.ContainsKey(accountIdentifier))
@@ -1007,7 +1022,7 @@ namespace Microsoft.Identity.Client
 
         internal void RemoveAdalUser(IAccount account, ISet<string> environmentAliases)
         {
-            CacheFallbackOperations.RemoveAdalUser(legacyCachePersistance, account.Username, environmentAliases, account.HomeAccountId.Identifier);
+            CacheFallbackOperations.RemoveAdalUser(_coreExceptionFactory, legacyCachePersistance, account.Username, environmentAliases, account.HomeAccountId.Identifier);
         }
 
         internal ICollection<string> GetAllAccessTokenCacheItems(RequestContext requestContext)

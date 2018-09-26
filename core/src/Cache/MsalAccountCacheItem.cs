@@ -36,16 +36,17 @@ namespace Microsoft.Identity.Core.Cache
         internal MsalAccountCacheItem(){
             AuthorityType = Cache.AuthorityType.MSSTS.ToString();
         }
-        internal MsalAccountCacheItem(string environment, MsalTokenResponse response) : this()
-        {
-            IdToken idToken = IdToken.Parse(response.IdToken);
+        //TODO: can we remove these?
+        //internal MsalAccountCacheItem(string environment, MsalTokenResponse response) : this()
+        //{
+        //    IdToken idToken = IdToken.Parse(response.IdToken);
 
-            Init(environment, idToken?.ObjectId, response.ClientInfo, idToken.Name, idToken.PreferredUsername, idToken.TenantId);
-        }
+        //    Init(environment, idToken?.ObjectId, response.ClientInfo, idToken.Name, idToken.PreferredUsername, idToken.TenantId);
+        //}
 
-        internal MsalAccountCacheItem(string environment, MsalTokenResponse response, string preferredUsername, string tenantID) : this()
+        internal MsalAccountCacheItem(ICoreExceptionFactory coreExceptionFactory, string environment, MsalTokenResponse response, string preferredUsername, string tenantID) : this()
         {
-            IdToken idToken = IdToken.Parse(response.IdToken);
+            IdToken idToken = IdToken.Parse(coreExceptionFactory, response.IdToken);
 
             Init(environment, idToken?.ObjectId, response.ClientInfo, idToken.Name, preferredUsername, tenantID);
         }

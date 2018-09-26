@@ -43,15 +43,18 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Flows
     internal class AcquireTokenIWAHandler : AcquireTokenHandlerBase
     {
         private readonly IHttpManager _httpManager;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
         private IntegratedWindowsAuthInput _iwaInput;
         private UserAssertion _userAssertion;
         private CommonNonInteractiveHandler _commonNonInteractiveHandler;
 
-        public AcquireTokenIWAHandler(IHttpManager httpManager, RequestData requestData, IntegratedWindowsAuthInput iwaInput)
+        public AcquireTokenIWAHandler(IHttpManager httpManager, ICoreExceptionFactory coreExceptionFactory, 
+            RequestData requestData, IntegratedWindowsAuthInput iwaInput)
             : base(requestData)
         {
             _httpManager = httpManager;
+            _coreExceptionFactory = coreExceptionFactory;
             _iwaInput = iwaInput ?? throw new ArgumentNullException(nameof(iwaInput));
 
             // We enable ADFS support only when it makes sense to do so
@@ -62,7 +65,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Flows
 
             DisplayableId = iwaInput.UserName;
 
-            _commonNonInteractiveHandler = new CommonNonInteractiveHandler(_httpManager, RequestContext, _iwaInput);
+            _commonNonInteractiveHandler = new CommonNonInteractiveHandler(_httpManager, _coreExceptionFactory, RequestContext, _iwaInput);
         }
 
         protected override async Task PreRunAsync()
@@ -91,7 +94,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Flows
                 if (string.Equals(userRealmResponse.AccountType, "federated", StringComparison.OrdinalIgnoreCase))
                 {
                     WsTrustResponse wsTrustResponse = await _commonNonInteractiveHandler.QueryWsTrustAsync(
-                         new MexParser(_httpManager, UserAuthType.IntegratedAuth, RequestContext),
+                         new MexParser(_httpManager, _coreExceptionFactory, UserAuthType.IntegratedAuth, RequestContext),
                          userRealmResponse,
                          (cloudAudience, trustAddress, userName) =>
                          {

@@ -85,7 +85,7 @@ namespace Microsoft.Identity.Client.Internal
         public override void Error(Exception ex)
         {
             Log(LogLevel.Error,
-                MsalExceptionFactory.GetPiiScrubbedExceptionDetails(ex),
+                InternalCoreExceptionFactory.GetCoreExceptionFactory().GetPiiScrubbedDetails(ex),
                 false);
         }
 
@@ -120,7 +120,7 @@ namespace Microsoft.Identity.Client.Internal
                 ? string.Empty
                 : " - " + CorrelationId;
 
-            var msalIdParameters = MsalIdHelper.GetMsalIdParameters();
+            var msalIdParameters = MsalIdHelper.GetMsalIdParameters(InternalCoreExceptionFactory.GetCoreExceptionFactory());
             string os = "N/A";
             if (msalIdParameters.ContainsKey(MsalIdParameter.OS))
             {

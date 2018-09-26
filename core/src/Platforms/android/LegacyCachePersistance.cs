@@ -36,7 +36,14 @@ namespace Microsoft.Identity.Core.Cache
     {
         private const string SharedPreferencesName = "ActiveDirectoryAuthenticationLibrary";
         private const string SharedPreferencesKey = "cache";
-        
+
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
+
+        public LegacyCachePersistance(ICoreExceptionFactory coreExceptionFactory)
+        {
+            _coreExceptionFactory = coreExceptionFactory;
+        }
+
         byte[] ILegacyCachePersistance.LoadCache()
         {
             try
@@ -51,7 +58,7 @@ namespace Microsoft.Identity.Core.Cache
             catch (Exception ex)
             {
                 string msg = "An error occurred while reading the adal cache: ";
-                string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(ex);
+                string noPiiMsg = _coreExceptionFactory.GetPiiScrubbedDetails(ex);
                 CoreLoggerBase.Default.Error(msg + noPiiMsg);
                 CoreLoggerBase.Default.ErrorPii(msg + ex);
                 // Ignore as the cache seems to be corrupt
@@ -74,7 +81,7 @@ namespace Microsoft.Identity.Core.Cache
                 catch (Exception ex)
             {
                 const string msg = "Failed to save adal cache: ";
-                string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(ex);
+                string noPiiMsg = _coreExceptionFactory.GetPiiScrubbedDetails(ex);
                 CoreLoggerBase.Default.Error(msg + noPiiMsg);
                 CoreLoggerBase.Default.ErrorPii(msg + ex);
             }

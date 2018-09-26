@@ -39,18 +39,22 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Flows
     internal class AcquireTokenUsernamePasswordHandler : AcquireTokenHandlerBase
     {
         private readonly IHttpManager _httpManager;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
+
         private UsernamePasswordInput _userPasswordInput;
         private UserAssertion _userAssertion;
         private CommonNonInteractiveHandler _commonNonInteractiveHandler;
 
         public AcquireTokenUsernamePasswordHandler(
             IHttpManager httpManager,
+            ICoreExceptionFactory coreExceptionFactory,
             RequestData requestData,
             UsernamePasswordInput userPasswordInput)
             : base(requestData)
         {
             _userPasswordInput = userPasswordInput ?? throw new ArgumentNullException("userPasswordInput");
             _httpManager = httpManager;
+            _coreExceptionFactory = coreExceptionFactory;
 
             // We enable ADFS support only when it makes sense to do so
             if (requestData.Authenticator.AuthorityType == AuthorityType.ADFS)
@@ -58,7 +62,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Flows
                 SupportADFS = true;
             }
 
-            _commonNonInteractiveHandler = new CommonNonInteractiveHandler(_httpManager, RequestContext, _userPasswordInput);
+            _commonNonInteractiveHandler = new CommonNonInteractiveHandler(_httpManager, _coreExceptionFactory, RequestContext, _userPasswordInput);
             DisplayableId = userPasswordInput.UserName;
 
         }
@@ -88,7 +92,7 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Flows
                 if (string.Equals(userRealmResponse.AccountType, "federated", StringComparison.OrdinalIgnoreCase))
                 {
                     var wsTrustResponse = await _commonNonInteractiveHandler.QueryWsTrustAsync(
-                        new MexParser(_httpManager, UserAuthType.UsernamePassword, RequestContext),
+                        new MexParser(_httpManager, _coreExceptionFactory, UserAuthType.UsernamePassword, RequestContext),
                         userRealmResponse,
                      (cloudAudience, trustAddress, userName) =>
                      {

@@ -25,6 +25,7 @@
 //
 //------------------------------------------------------------------------------
 
+using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Cache;
 
 
@@ -41,7 +42,13 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal
 #endif
     internal static class StorageDelegates
     {
-        internal static readonly ILegacyCachePersistance legacyCachePersistance = new LegacyCachePersistance();
+        static StorageDelegates()
+        {
+            ModuleInitializer.EnsureModuleInitialized();
+            legacyCachePersistance = new LegacyCachePersistance(InternalCoreExceptionFactory.GetCoreExceptionFactory());
+        }
+
+        internal static readonly ILegacyCachePersistance legacyCachePersistance;
 
         public static void BeforeAccess(TokenCacheNotificationArgs args)
         {

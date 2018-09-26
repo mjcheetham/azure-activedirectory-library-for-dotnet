@@ -58,15 +58,19 @@ namespace Test.MSAL.NET.Unit
         private IAadInstanceDiscovery _aadInstanceDiscovery;
         private IHttpManager _httpManager;
         private IAuthorityFactory _authorityFactory;
+        private ICoreExceptionFactory _coreExceptionFactory;
 
         [TestInitialize]
         public void TestInitialize()
         {
             ModuleInitializer.ForceModuleInitializationTestOnly();
 
-            _httpManager = new HttpManager(new HttpClientFactory(true));
-            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
-            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
+            _coreExceptionFactory = new MsalExceptionFactory();
+            _httpManager = new HttpManager(new HttpClientFactory(true), _coreExceptionFactory);
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(_coreExceptionFactory);
+
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager, _coreExceptionFactory);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery, _coreExceptionFactory);
 
             _cache = new TokenCache();
             Authority.ValidatedAuthorities.Clear();
@@ -168,7 +172,7 @@ namespace Test.MSAL.NET.Unit
         public async Task NoStateReturnedTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             MockWebUI ui = new MockWebUI()
@@ -212,7 +216,7 @@ namespace Test.MSAL.NET.Unit
         public async Task DifferentStateReturnedTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             MockWebUI ui = new MockWebUI()
@@ -252,7 +256,7 @@ namespace Test.MSAL.NET.Unit
         public async Task AcquireTokenNoClientInfoReturnedTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             MockWebUI ui = new MockWebUI()
@@ -299,7 +303,7 @@ namespace Test.MSAL.NET.Unit
         public void AcquireTokenSameUserTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             MockWebUI ui = new MockWebUI()
@@ -356,7 +360,7 @@ namespace Test.MSAL.NET.Unit
         public void AcquireTokenAddTwoUsersTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             MockWebUI ui = new MockWebUI()
@@ -421,7 +425,7 @@ namespace Test.MSAL.NET.Unit
         {
             _cache.ClientId = TestConstants.ClientId;
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 UserTokenCache = _cache
@@ -503,7 +507,7 @@ namespace Test.MSAL.NET.Unit
         {
             _cache.ClientId = TestConstants.ClientId;
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 UserTokenCache = _cache
@@ -569,7 +573,7 @@ namespace Test.MSAL.NET.Unit
         public void GetUsersTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
             IEnumerable<IAccount> users = app.GetAccountsAsync().Result;
             Assert.IsNotNull(users);
@@ -647,7 +651,7 @@ namespace Test.MSAL.NET.Unit
         public void GetUsersAndSignThemOutTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
             app.UserTokenCache = new TokenCache()
             {
@@ -669,7 +673,7 @@ namespace Test.MSAL.NET.Unit
         public async Task AcquireTokenSilentScopeAndEmptyCacheTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 ValidateAuthority = false
@@ -701,7 +705,7 @@ namespace Test.MSAL.NET.Unit
         public async Task AcquireTokenSilentScopeAndUserMultipleTokensFoundTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 ValidateAuthority = false
@@ -733,7 +737,7 @@ namespace Test.MSAL.NET.Unit
             // get authority (if unique) from the cache entries where scope does not match.
             // it should only happen for case where no authority is passed.
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 ValidateAuthority = false
@@ -783,7 +787,7 @@ namespace Test.MSAL.NET.Unit
         public void AcquireTokenSilentScopeAndUserOverloadDefaultAuthorityTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 ValidateAuthority = false
@@ -817,7 +821,7 @@ namespace Test.MSAL.NET.Unit
         public void AcquireTokenSilentScopeAndUserOverloadTenantSpecificAuthorityTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, TestConstants.AuthorityGuestTenant)
                 {
                     ValidateAuthority = false
@@ -850,7 +854,7 @@ namespace Test.MSAL.NET.Unit
         public void AcquireTokenSilentCacheOnlyLookupTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, TestConstants.AuthorityGuestTenant)
             {
                 ValidateAuthority = false
@@ -889,7 +893,7 @@ namespace Test.MSAL.NET.Unit
             HttpMessageHandlerFactory.ClearMockHandlers();
 
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 ValidateAuthority = false
@@ -944,7 +948,7 @@ namespace Test.MSAL.NET.Unit
         public void AcquireTokenSilentServiceErrorTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 ValidateAuthority = false
@@ -999,7 +1003,7 @@ namespace Test.MSAL.NET.Unit
         public async Task HttpRequestExceptionIsNotSuppressed()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             // add mock response bigger than 1MB for Http Client
@@ -1021,7 +1025,7 @@ namespace Test.MSAL.NET.Unit
         {
             _cache.ClientId = TestConstants.ClientId;
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 UserTokenCache = _cache
@@ -1064,7 +1068,7 @@ namespace Test.MSAL.NET.Unit
         public void GetUserTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
             var users = app.GetAccountsAsync().Result;
             Assert.IsNotNull(users);
@@ -1106,7 +1110,7 @@ namespace Test.MSAL.NET.Unit
         public async Task AcquireTokenWithAuthenticationCanceledTestAsync()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             // Interactive call and user cancels authentication
@@ -1151,7 +1155,7 @@ namespace Test.MSAL.NET.Unit
         public async Task AcquireTokenWithAccessDeniedErrorTestAsync()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             // Interactive call and authentication fails with access denied
@@ -1195,7 +1199,7 @@ namespace Test.MSAL.NET.Unit
         public void GetAuthority_AccountWithNullIdPassed_CommonAuthorityUsed()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             var authoriy = app.GetAuthority(new Account(null, TestConstants.Name, TestConstants.ProductionPrefNetworkEnvironment));
@@ -1207,7 +1211,7 @@ namespace Test.MSAL.NET.Unit
         public void GetAuthority_AccountWithIdPassed_TenantedAuthorityUsed()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority);
 
             var authoriy = app.GetAuthority(
@@ -1223,7 +1227,7 @@ namespace Test.MSAL.NET.Unit
         public async Task AcquireTokenSilentNullAccountErrorTest()
         {
             PublicClientApplication app = new PublicClientApplication(
-                _httpManager, _authorityFactory, _aadInstanceDiscovery,
+                _httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority)
             {
                 ValidateAuthority = false

@@ -34,9 +34,9 @@ using System.Text;
 namespace Microsoft.Identity.Client
 {
     /// <summary>
-    /// Implementation of the <see cref="CoreExceptionFactory"/> that throws <see cref="MsalException"/>
+    /// Implementation of the <see cref="ICoreExceptionFactory"/> that throws <see cref="MsalException"/>
     /// </summary>
-    internal class MsalExceptionFactory : CoreExceptionFactory
+    internal class MsalExceptionFactory : ICoreExceptionFactory
     {
         /// <summary>
         /// Throws an MsalClient exception
@@ -45,7 +45,7 @@ namespace Microsoft.Identity.Client
         /// <param name="errorMessage">A user friendly message</param>
         /// <param name="innerException">Optionally an inner exception</param>
         /// <remarks>The error code should be made available in MSAL through a public constant</remarks>
-        public override Exception GetClientException(
+        public Exception GetClientException(
             string errorCode, 
             string errorMessage, 
             Exception innerException = null)
@@ -61,7 +61,7 @@ namespace Microsoft.Identity.Client
         /// </summary>
         /// <param name="errorCode">The error code</param>
         /// <param name="errorMessage">A user friendly message</param>
-        public override Exception GetServiceException(
+        public Exception GetServiceException(
             string errorCode,
             string errorMessage)
         {
@@ -75,7 +75,7 @@ namespace Microsoft.Identity.Client
         /// <param name="errorCode">The error code</param>
         /// <param name="errorMessage">A user friendly message</param>
         /// <param name="exceptionDetail">More exception params</param>
-        public override Exception GetServiceException(
+        public Exception GetServiceException(
             string errorCode, 
             string errorMessage,
             ExceptionDetail exceptionDetail = null)
@@ -87,7 +87,7 @@ namespace Microsoft.Identity.Client
         /// <summary>
         /// Throw an <see cref="MsalServiceException"/> exception
         /// </summary>
-        public override Exception GetServiceException(
+        public Exception GetServiceException(
             string errorCode, 
             string errorMessage, 
             Exception innerException = null, 
@@ -110,7 +110,7 @@ namespace Microsoft.Identity.Client
         /// <summary>
         /// Throw an <see cref="MsalUiRequiredException"/>
         /// </summary>
-        public override Exception GetUiRequiredException(
+        public Exception GetUiRequiredException(
             string errorCode, 
             string errorMessage, 
             Exception innerException,
@@ -126,12 +126,12 @@ namespace Microsoft.Identity.Client
             };
         }
 
-        public override string GetPiiScrubbedDetails(Exception ex)
+        public string GetPiiScrubbedDetails(Exception ex)
         {
             return GetPiiScrubbedExceptionDetails(ex);
         }
 
-        public static string GetPiiScrubbedExceptionDetails(Exception ex)
+        private static string GetPiiScrubbedExceptionDetails(Exception ex)
         {
             var sb = new StringBuilder();
             if (ex != null)

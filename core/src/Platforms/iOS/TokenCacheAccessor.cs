@@ -99,12 +99,12 @@ namespace Microsoft.Identity.Core
             return match.AccessGroup.Split('.')[0];
         }
 
-        public TokenCacheAccessor()
+        public TokenCacheAccessor(ICoreExceptionFactory coreExceptionFactory)
         {
             keychainGroup = GetTeamId() + '.' + DefaultKeychainGroup;
         }
 
-        public TokenCacheAccessor(RequestContext requestContext) : this()
+        public TokenCacheAccessor(ICoreExceptionFactory coreExceptionFactory, RequestContext requestContext) : this(coreExceptionFactory)
         {
             _requestContext = requestContext;
         }

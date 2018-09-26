@@ -46,13 +46,19 @@ namespace Microsoft.Identity.Client.Internal.Requests
         private UserAssertion _userAssertion;
         private CommonNonInteractiveHandler _commonNonInteractiveHandler;
 
-        public IntegratedWindowsAuthRequest(IHttpManager httpManager, IAuthorityFactory authorityFactory, IAadInstanceDiscovery aadInstanceDiscovery,
-            AuthenticationRequestParameters authenticationRequestParameters, Core.IntegratedWindowsAuthInput iwaInput)
-            : base(httpManager, authorityFactory, aadInstanceDiscovery, authenticationRequestParameters)
+        public IntegratedWindowsAuthRequest(
+            IHttpManager httpManager, 
+            IAuthorityFactory authorityFactory, 
+            IAadInstanceDiscovery aadInstanceDiscovery,
+            ICoreExceptionFactory coreExceptionFactory,
+            AuthenticationRequestParameters authenticationRequestParameters, 
+            IntegratedWindowsAuthInput iwaInput)
+            : base(httpManager, authorityFactory, aadInstanceDiscovery, coreExceptionFactory, authenticationRequestParameters)
         {
             _iwaInput = iwaInput ?? throw new ArgumentNullException(nameof(iwaInput));
             _commonNonInteractiveHandler = new CommonNonInteractiveHandler(
                 httpManager,
+                coreExceptionFactory,
                 authenticationRequestParameters.RequestContext,
                 _iwaInput);
         }
@@ -75,7 +81,7 @@ namespace Microsoft.Identity.Client.Internal.Requests
                 if (string.Equals(userRealmResponse.AccountType, "federated", StringComparison.OrdinalIgnoreCase))
                 {
                     WsTrustResponse wsTrustResponse = await _commonNonInteractiveHandler.QueryWsTrustAsync(
-                        new MexParser(HttpManager, UserAuthType.IntegratedAuth, AuthenticationRequestParameters.RequestContext),
+                        new MexParser(HttpManager, CoreExceptionFactory, UserAuthType.IntegratedAuth, AuthenticationRequestParameters.RequestContext),
                         userRealmResponse,
                         (cloudAudience, trustAddress, userName) =>
                         {

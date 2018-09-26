@@ -65,10 +65,11 @@ namespace Microsoft.Identity.Core.Cache
             }
         }
 
-        internal IdToken IdToken {
+        internal IdToken IdToken
+        {
             get
             {
-                return IdToken.Parse(Secret);
+                return IdToken.Parse(InternalCoreExceptionFactory.GetCoreExceptionFactory(), Secret);
             }
         }
 

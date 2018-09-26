@@ -36,10 +36,12 @@ namespace Microsoft.Identity.Core.UI.SystemWebview
     [Android.Runtime.Preserve(AllMembers = true)]
     internal class SystemWebUI : WebviewBase
     {
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
         private readonly CoreUIParent _parent;
 
-        public SystemWebUI(CoreUIParent parent)
+        public SystemWebUI(ICoreExceptionFactory coreExceptionFactory, CoreUIParent parent)
         {
+            _coreExceptionFactory = coreExceptionFactory;
             _parent = parent;
         }
 
@@ -59,10 +61,10 @@ namespace Microsoft.Identity.Core.UI.SystemWebview
             }
             catch (Exception ex)
             {
-                string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(ex);
+                string noPiiMsg = _coreExceptionFactory.GetPiiScrubbedDetails(ex);
                 requestContext.Logger.Error(noPiiMsg);
                 requestContext.Logger.ErrorPii(ex);
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw _coreExceptionFactory.GetClientException(
                     CoreErrorCodes.AuthenticationUiFailedError, 
                     "AuthenticationActivity failed to start", 
                     ex);

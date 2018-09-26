@@ -52,6 +52,7 @@ namespace Test.ADAL.NET.Integration
     public class ManagedUserCredentialTests
     {
         private IHttpManager _httpManager;
+        private ICoreExceptionFactory _coreExceptionFactory;
 
         [TestInitialize]
         public void Initialize()
@@ -60,7 +61,8 @@ namespace Test.ADAL.NET.Integration
             ResetInstanceDiscovery();
             CoreHttpMessageHandlerFactory.ClearMockHandlers();
 
-            _httpManager = new HttpManager(new HttpClientFactory(true));
+            _coreExceptionFactory = new AdalExceptionFactory();
+            _httpManager = new HttpManager(new HttpClientFactory(true), _coreExceptionFactory);
         }
 
         public void ResetInstanceDiscovery()
@@ -131,7 +133,7 @@ namespace Test.ADAL.NET.Integration
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityHomeTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,
@@ -199,7 +201,7 @@ namespace Test.ADAL.NET.Integration
 
             setupResult.Result.UserInfo = new AdalUserInfo();
             setupResult.Result.UserInfo.DisplayableId = TestConstants.DefaultDisplayableId;
-            context.TokenCache.tokenCacheDictionary[key] = setupResult;
+            context.TokenCache._tokenCacheDictionary[key] = setupResult;
 
             var result =
                 await
@@ -216,8 +218,8 @@ namespace Test.ADAL.NET.Integration
             // There should be only two cache entrys.
             Assert.AreEqual(2, context.TokenCache.Count);
 
-            var keys = context.TokenCache.tokenCacheDictionary.Values.ToList();
-            var values = context.TokenCache.tokenCacheDictionary.Values.ToList();
+            var keys = context.TokenCache._tokenCacheDictionary.Values.ToList();
+            var values = context.TokenCache._tokenCacheDictionary.Values.ToList();
             Assert.AreNotEqual(keys[0].Result.UserInfo.UniqueId, keys[1].Result.UserInfo.UniqueId);
             Assert.AreNotEqual(values[0].Result.UserInfo.UniqueId, values[1].Result.UserInfo.UniqueId);
             Assert.AreEqual(0, AdalHttpMessageHandlerFactory.MockHandlersCount());
@@ -288,6 +290,10 @@ namespace Test.ADAL.NET.Integration
             Assert.AreEqual(0, AdalHttpMessageHandlerFactory.MockHandlersCount());
         }
 
+        // TODO: need to figure out why this fails when run with all other tests,
+        // but succeeds when run by itself in isolation.
+        // Something is happening with module initialization in other tests that's
+        // messing this up.
         [TestMethod]
         [Description("Test case where user realm discovery fails.")]
         public void UserRealmDiscoveryFailsTest()
@@ -320,6 +326,10 @@ namespace Test.ADAL.NET.Integration
             //Assert.AreEqual(((AdalException)ex.InnerException.InnerException).ErrorCode, AdalError.UserRealmDiscoveryFailed);
         }
 
+        // TODO: need to figure out why this fails when run with all other tests,
+        // but succeeds when run by itself in isolation.
+        // Something is happening with module initialization in other tests that's
+        // messing this up.
         [TestMethod]
         [Description("Test case where user realm discovery cannot determine the user type.")]
         public async Task UnknownUserRealmDiscoveryTestAsync()

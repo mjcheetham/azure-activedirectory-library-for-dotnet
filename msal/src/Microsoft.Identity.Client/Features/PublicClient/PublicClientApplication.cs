@@ -43,7 +43,7 @@ namespace Microsoft.Identity.Client
         /// <param name="authority">Default authority to be used for the application</param>
         /// <param name="userTokenCache">Instance of TokenCache.</param>
         public PublicClientApplication(string clientId, string authority, TokenCache userTokenCache) 
-            : base(null, null, null, clientId, authority, PlatformPlugin.PlatformInformation.GetDefaultRedirectUri(clientId), true)
+            : base(null, null, null, null, clientId, authority, PlatformPlugin.PlatformInformation.GetDefaultRedirectUri(clientId), true)
         {
             UserTokenCache = userTokenCache;
         }

@@ -116,7 +116,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
             parameters.RedirectUri = new Uri("some://uri");
             parameters.ExtraQueryParameters = "extra=qp";
 
-            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters,
+            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory, parameters,
                 TestConstants.ScopeForAnotherResource.ToArray(),
                 TestConstants.DisplayableId,
                 UIBehavior.SelectAccount, ui);
@@ -182,7 +182,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
             parameters.RedirectUri = new Uri("some://uri");
             parameters.ExtraQueryParameters = "extra=qp";
 
-            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, parameters,
+            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory, parameters,
                 TestConstants.ScopeForAnotherResource.ToArray(),
                  TestConstants.DisplayableId,
                 UIBehavior.SelectAccount, ui);
@@ -223,7 +223,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
                 parameters.RedirectUri = new Uri("some://uri#fragment=not-so-good");
                 parameters.ExtraQueryParameters = "extra=qp";
 
-                new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
+                new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory,
                     parameters, TestConstants.ScopeForAnotherResource.ToArray(),
                     (string)null, UIBehavior.ForceLogin, new MockWebUI()
                     );
@@ -261,7 +261,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
             parameters.RedirectUri = new Uri("some://uri");
             parameters.ExtraQueryParameters = "extra=qp";
 
-            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
+            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory,
                 parameters,
                 TestConstants.ScopeForAnotherResource.ToArray(),
                 (string)null, UIBehavior.ForceLogin, webUi);
@@ -282,7 +282,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
                 TestConstants.AuthorityHomeTenant +
                 "?error=invalid_request&error_description=some error description");
 
-            request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
+            request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory,
                 parameters,
                 TestConstants.ScopeForAnotherResource.ToArray(),
                 (string)null, UIBehavior.ForceLogin, webUi);
@@ -322,7 +322,7 @@ namespace Test.MSAL.NET.Unit.RequestsTests
 
             MockInstanceDiscoveryAndOpenIdRequest();
 
-            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, 
+            InteractiveRequest request = new InteractiveRequest(HttpManager, AuthorityFactory, AadInstanceDiscovery, CoreExceptionFactory,
                 parameters,
                 TestConstants.ScopeForAnotherResource.ToArray(),
                 null, UIBehavior.ForceLogin, new MockWebUI());

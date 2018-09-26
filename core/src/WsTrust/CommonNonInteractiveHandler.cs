@@ -41,12 +41,14 @@ namespace Microsoft.Identity.Core.WsTrust
         private readonly RequestContext _requestContext;
         private readonly IUsernameInput _usernameInput;
         private readonly IHttpManager _httpManager;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
-        public CommonNonInteractiveHandler(IHttpManager httpManager, RequestContext requestContext, IUsernameInput usernameInput)
+        public CommonNonInteractiveHandler(IHttpManager httpManager, ICoreExceptionFactory coreExceptionFactory, RequestContext requestContext, IUsernameInput usernameInput)
         {
             _requestContext = requestContext;
             _usernameInput = usernameInput;
             _httpManager = httpManager;
+            _coreExceptionFactory = coreExceptionFactory;
         }
 
         /// <summary>
@@ -63,7 +65,7 @@ namespace Microsoft.Identity.Core.WsTrust
                 logger.Info(msg);
                 logger.InfoPii(msg);
 
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw _coreExceptionFactory.GetClientException(
                     CoreErrorCodes.UnknownUser,
                     CoreErrorMessages.UnknownUser);
 
@@ -105,7 +107,7 @@ namespace Microsoft.Identity.Core.WsTrust
 
             if (userRealmResponse == null)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw _coreExceptionFactory.GetClientException(
                     CoreErrorCodes.UserRealmDiscoveryFailed,
                     CoreErrorMessages.UserRealmDiscoveryFailed);
             }
@@ -130,13 +132,14 @@ namespace Microsoft.Identity.Core.WsTrust
 
                 wsTrustResponse = await WsTrustRequest.SendRequestAsync(
                     _httpManager,
+                    _coreExceptionFactory,
                     wsTrustAddress,
                     wsTrustRequest.ToString(),
                     _requestContext).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw _coreExceptionFactory.GetClientException(
                     CoreErrorCodes.ParsingWsTrustResponseFailed,
                     ex.Message,
                     ex);
@@ -149,7 +152,7 @@ namespace Microsoft.Identity.Core.WsTrust
 
             if (wsTrustResponse == null)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw _coreExceptionFactory.GetClientException(
                     CoreErrorCodes.ParsingWsTrustResponseFailed,
                     CoreErrorMessages.ParsingWsTrustResponseFailed);
             }
@@ -169,7 +172,7 @@ namespace Microsoft.Identity.Core.WsTrust
         {
             if (string.IsNullOrWhiteSpace(userRealmResponse.FederationMetadataUrl))
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw _coreExceptionFactory.GetClientException(
                     CoreErrorCodes.MissingFederationMetadataUrl,
                     CoreErrorMessages.MissingFederationMetadataUrl);
             }
@@ -183,14 +186,14 @@ namespace Microsoft.Identity.Core.WsTrust
 
                 if (wsTrustAddress == null)
                 {
-                    CoreExceptionFactory.Instance.GetClientException(
+                    _coreExceptionFactory.GetClientException(
                       CoreErrorCodes.WsTrustEndpointNotFoundInMetadataDocument,
                       CoreErrorMessages.WsTrustEndpointNotFoundInMetadataDocument);
                 }
             }
             catch (XmlException ex)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw _coreExceptionFactory.GetClientException(
                     CoreErrorCodes.ParsingWsMetadataExchangeFailed,
                     CoreErrorMessages.ParsingMetadataDocumentFailed,
                     ex);

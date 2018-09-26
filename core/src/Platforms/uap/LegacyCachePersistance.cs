@@ -40,6 +40,10 @@ namespace Microsoft.Identity.Core.Cache
         private const string CacheValueLength = "CacheValueLength";
         private const int MaxCompositeValueLength = 1024;
 
+        public LegacyCachePersistance(ICoreExceptionFactory coreExceptionFactory)
+        {
+        }
+
         byte[] ILegacyCachePersistance.LoadCache()
         {
             try
@@ -52,7 +56,7 @@ namespace Microsoft.Identity.Core.Cache
             catch (Exception ex)
             {
                 string msg = "Failed to load adal cache: ";
-                string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(ex);
+                string noPiiMsg = InternalCoreExceptionFactory.GetCoreExceptionFactory().GetPiiScrubbedDetails(ex);
                 CoreLoggerBase.Default.Warning(msg + noPiiMsg);
                 CoreLoggerBase.Default.WarningPii(msg + ex);
                 // Ignore as the cache seems to be corrupt
@@ -73,7 +77,7 @@ namespace Microsoft.Identity.Core.Cache
             catch (Exception ex)
             {
                 string msg = "Failed to save adal cache: ";
-                string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(ex);
+                string noPiiMsg = InternalCoreExceptionFactory.GetCoreExceptionFactory().GetPiiScrubbedDetails(ex);
                 CoreLoggerBase.Default.Warning(msg + noPiiMsg);
                 CoreLoggerBase.Default.WarningPii(msg + ex);
             }

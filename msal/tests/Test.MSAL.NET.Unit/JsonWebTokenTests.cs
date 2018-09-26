@@ -26,6 +26,7 @@
 //------------------------------------------------------------------------------
 
 using Microsoft.Identity.Client;
+using Microsoft.Identity.Core;
 using Microsoft.Identity.Core.Helpers;
 using Microsoft.Identity.Core.Http;
 using Microsoft.Identity.Core.Instance;
@@ -54,6 +55,7 @@ namespace Test.MSAL.NET.Unit
         private IAadInstanceDiscovery _aadInstanceDiscovery;
         private IHttpManager _httpManager;
         private IAuthorityFactory _authorityFactory;
+        private ICoreExceptionFactory _coreExceptionFactory;
 
         MockHttpMessageHandler X5CMockHandler = new MockHttpMessageHandler()
         {
@@ -102,9 +104,12 @@ namespace Test.MSAL.NET.Unit
         [TestInitialize]
         public void TestInitialize()
         {
-            _httpManager = new HttpManager(new HttpClientFactory(true));
-            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager);
-            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery);
+            _coreExceptionFactory = new TestExceptionFactory();
+            _httpManager = new HttpManager(new HttpClientFactory(true), _coreExceptionFactory);
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(_coreExceptionFactory);
+
+            _aadInstanceDiscovery = new AadInstanceDiscovery(_httpManager, _coreExceptionFactory);
+            _authorityFactory = new AuthorityFactory(_httpManager, _aadInstanceDiscovery, _coreExceptionFactory);
 
             _cache = new TokenCache();
             Authority.ValidatedAuthorities.Clear();
@@ -134,7 +139,7 @@ namespace Test.MSAL.NET.Unit
             var certificate = new X509Certificate2("valid_cert.pfx", TestConstants.DefaultPassword);
             var clientAssertion = new ClientAssertionCertificate(certificate);
             var clientCredential = new ClientCredential(clientAssertion);
-            var app = new ConfidentialClientApplication(_httpManager, _authorityFactory, _aadInstanceDiscovery,
+            var app = new ConfidentialClientApplication(_httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority, TestConstants.RedirectUri, clientCredential, _cache, _cache)
             {
                 ValidateAuthority = false
@@ -158,7 +163,7 @@ namespace Test.MSAL.NET.Unit
             var certificate = new X509Certificate2("valid_cert.pfx", TestConstants.DefaultPassword);
             var clientAssertion = new ClientAssertionCertificate(certificate);
             var clientCredential = new ClientCredential(clientAssertion);
-            var app = new ConfidentialClientApplication(_httpManager, _authorityFactory, _aadInstanceDiscovery,
+            var app = new ConfidentialClientApplication(_httpManager, _authorityFactory, _aadInstanceDiscovery, _coreExceptionFactory,
                 TestConstants.ClientId, ClientApplicationBase.DefaultAuthority, TestConstants.RedirectUri, clientCredential, _cache, _cache)
             {
                 ValidateAuthority = false

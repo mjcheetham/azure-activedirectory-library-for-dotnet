@@ -36,12 +36,16 @@ namespace Microsoft.Identity.Core.UI.EmbeddedWebview
     internal class EmbeddedWebUI : WebviewBase, IDisposable
     {
         private nint taskId = UIApplication.BackgroundTaskInvalid;
-        private NSObject didEnterBackgroundNotification, willEnterForegroundNotification;
+        private readonly NSObject didEnterBackgroundNotification;
+        private readonly NSObject willEnterForegroundNotification;
+
         public RequestContext RequestContext { get; internal set; }
         public CoreUIParent CoreUIParent { get; set; }
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
-        public EmbeddedWebUI()
+        public EmbeddedWebUI(ICoreExceptionFactory coreExceptionFactory)
         {
+            _coreExceptionFactory = coreExceptionFactory;
             this.didEnterBackgroundNotification = NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.DidEnterBackgroundNotification, OnMoveToBackground);
             this.willEnterForegroundNotification = NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.WillEnterForegroundNotification, OnMoveToForeground);
         }
@@ -86,7 +90,7 @@ namespace Microsoft.Identity.Core.UI.EmbeddedWebview
             }
             catch (Exception ex)
             {
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw _coreExceptionFactory.GetClientException(
                     CoreErrorCodes.AuthenticationUiFailed, 
                     "See inner exception for details", 
                     ex);

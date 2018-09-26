@@ -32,6 +32,12 @@ namespace Microsoft.Identity.Core.Telemetry
 {
     internal class TelemetryTokenCacheAccessor : TokenCacheAccessor
     {
+        public TelemetryTokenCacheAccessor(ICoreExceptionFactory coreExceptionFactory) 
+            : base(coreExceptionFactory)
+        {
+
+        }
+
         // The content of this class has to be placed outside of its base class TokenCacheAccessor,
         // otherwise we would have to modify multiple implementations of TokenCacheAccessor on different platforms.
         public void SaveAccessToken(MsalAccessTokenCacheItem item, RequestContext requestContext)

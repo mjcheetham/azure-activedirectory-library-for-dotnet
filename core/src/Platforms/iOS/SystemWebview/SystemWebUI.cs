@@ -37,12 +37,15 @@ namespace Microsoft.Identity.Core.UI.SystemWebview
     internal class SystemWebUI : WebviewBase, IDisposable
     {
         private nint taskId = UIApplication.BackgroundTaskInvalid;
-        private NSObject didEnterBackgroundNotification, willEnterForegroundNotification;
+        private readonly NSObject didEnterBackgroundNotification;
+        private readonly NSObject willEnterForegroundNotification;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
         public RequestContext RequestContext { get; set; }
 
-        public SystemWebUI()
+        public SystemWebUI(ICoreExceptionFactory coreExceptionFactory)
         {
+            _coreExceptionFactory = coreExceptionFactory;
             this.didEnterBackgroundNotification = NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.DidEnterBackgroundNotification, OnMoveToBackground);
             this.willEnterForegroundNotification = NSNotificationCenter.DefaultCenter.AddObserver(UIApplication.WillEnterForegroundNotification, OnMoveToForeground);
         }
@@ -82,10 +85,10 @@ namespace Microsoft.Identity.Core.UI.SystemWebview
             }
             catch (Exception ex)
             {
-                string noPiiMsg = CoreExceptionFactory.Instance.GetPiiScrubbedDetails(ex);
+                string noPiiMsg = _coreExceptionFactory.GetPiiScrubbedDetails(ex);
                 requestContext.Logger.Error(noPiiMsg);
                 requestContext.Logger.ErrorPii(ex);
-                throw CoreExceptionFactory.Instance.GetClientException(
+                throw _coreExceptionFactory.GetClientException(
                     CoreErrorCodes.AuthenticationUiFailedError, 
                     "Failed to invoke SFSafariViewController", 
                     ex);

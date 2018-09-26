@@ -31,11 +31,11 @@ namespace Microsoft.Identity.Core.UI
 {
     internal class WebUIFactory : IWebUIFactory
     {
-        public IWebUI CreateAuthenticationDialog(CoreUIParent coreUIParent, RequestContext requestContext)
+        public IWebUI CreateAuthenticationDialog(ICoreExceptionFactory coreExceptionFactory, CoreUIParent coreUIParent, RequestContext requestContext)
         {
             if (coreUIParent.UseEmbeddedWebview)
             {
-                return new EmbeddedWebview.EmbeddedWebUI()
+                return new EmbeddedWebview.EmbeddedWebUI(coreExceptionFactory)
                 {
                     RequestContext = requestContext,
                     CoreUIParent = coreUIParent
@@ -43,7 +43,7 @@ namespace Microsoft.Identity.Core.UI
             }
 
             //there is no need to pass UIParent.
-            return new SystemWebUI()
+            return new SystemWebUI(coreExceptionFactory)
             {
                 RequestContext = requestContext
             };

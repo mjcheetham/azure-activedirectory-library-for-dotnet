@@ -56,15 +56,17 @@ namespace Test.ADAL.NET.Integration
     public class FederatedUserCredentialTests
     {
         private IHttpManager _httpManager;
+        private ICoreExceptionFactory _coreExceptionFactory;
 
         [TestInitialize]
         public void Initialize()
         {
             CoreHttpMessageHandlerFactory.ClearMockHandlers();
             ResetInstanceDiscovery();
-            CoreExceptionFactory.Instance = new AdalExceptionFactory();
 
-            _httpManager = new HttpManager(new HttpClientFactory(true));
+            _coreExceptionFactory = new AdalExceptionFactory();
+            InternalCoreExceptionFactory.InitializeCoreExceptionFactory(_coreExceptionFactory);
+            _httpManager = new HttpManager(new HttpClientFactory(true), _coreExceptionFactory);
         }
 
         public void ResetInstanceDiscovery()
@@ -285,7 +287,7 @@ namespace Test.ADAL.NET.Integration
             AdalTokenCacheKey key = new AdalTokenCacheKey(TestConstants.DefaultAuthorityCommonTenant,
                 TestConstants.DefaultResource, TestConstants.DefaultClientId, TokenSubjectType.User,
                 TestConstants.DefaultUniqueId, TestConstants.DefaultDisplayableId);
-            context.TokenCache.tokenCacheDictionary[key] = new AdalResultWrapper
+            context.TokenCache._tokenCacheDictionary[key] = new AdalResultWrapper
             {
                 RefreshToken = "some-rt",
                 ResourceInResponse = TestConstants.DefaultResource,

@@ -43,9 +43,10 @@ namespace Microsoft.Identity.Core.WsTrust
         private const int MaxExpectedMessageSize = 1024;
         private const int ExpiryInMinutes = 10;
 
-        // todo: this should be an internal method on CommonNonInteractiveHandler instead of a separate static class/method.
+        // TODO: this should be an internal method on CommonNonInteractiveHandler instead of a separate static class/method.
         public static async Task<WsTrustResponse> SendRequestAsync(
             IHttpManager httpManager,
+            ICoreExceptionFactory coreExceptionFactory,
             WsTrustAddress wsTrustAddress,
             string wsTrustRequest,
             RequestContext requestContext)
@@ -75,7 +76,7 @@ namespace Microsoft.Identity.Core.WsTrust
                     errorMessage = resp.Body;
                 }
 
-                throw CoreExceptionFactory.Instance.GetServiceException(
+                throw coreExceptionFactory.GetServiceException(
                     CoreErrorCodes.FederatedServiceReturnedError,
                     string.Format(CultureInfo.CurrentCulture, CoreErrorMessages.FederatedServiceReturnedErrorTemplate, wsTrustAddress.Uri, errorMessage)
                 );
@@ -87,7 +88,7 @@ namespace Microsoft.Identity.Core.WsTrust
             }
             catch (System.Xml.XmlException ex)
             {
-                throw CoreExceptionFactory.Instance.GetServiceException(
+                throw coreExceptionFactory.GetServiceException(
                     CoreErrorCodes.ParsingWsTrustResponseFailed, CoreErrorCodes.ParsingWsTrustResponseFailed, ex);
             }
         }

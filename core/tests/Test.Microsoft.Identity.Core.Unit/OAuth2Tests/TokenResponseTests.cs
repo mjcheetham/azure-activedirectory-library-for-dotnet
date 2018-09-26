@@ -42,6 +42,7 @@ namespace Test.Microsoft.Identity.Unit.OAuth2Tests
     public class TokenResponseTests
     {
         private IHttpManager _httpManager;
+        private ICoreExceptionFactory _coreExceptionFactory;
 
         [TestInitialize]
         public void TestInitialize()
@@ -50,7 +51,8 @@ namespace Test.Microsoft.Identity.Unit.OAuth2Tests
             HttpMessageHandlerFactory.ClearMockHandlers();
             CoreTelemetryService.InitializeCoreTelemetryService(new TestTelemetry());
 
-            _httpManager = new HttpManager(new HttpClientFactory(true));
+            _coreExceptionFactory = new TestExceptionFactory();
+            _httpManager = new HttpManager(new HttpClientFactory(true), _coreExceptionFactory);
         }
 
         [TestMethod]
@@ -80,7 +82,7 @@ namespace Test.Microsoft.Identity.Unit.OAuth2Tests
                 ResponseMessage =
                     MockHelpers.CreateSuccessTokenResponseMessage()
             });
-            OAuth2Client client = new OAuth2Client(_httpManager);
+            OAuth2Client client = new OAuth2Client(_httpManager, _coreExceptionFactory);
             Task<MsalTokenResponse> task = client.GetTokenAsync(new Uri(TestConstants.AuthorityCommonTenant), new RequestContext(new TestLogger(Guid.NewGuid(), null)));
             MsalTokenResponse response = task.Result;
             Assert.IsNotNull(response);

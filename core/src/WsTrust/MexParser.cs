@@ -71,10 +71,16 @@ namespace Microsoft.Identity.Core.WsTrust
         private readonly UserAuthType _userAuthType;
         private readonly RequestContext _requestContext;
         private readonly IHttpManager _httpManager;
+        private readonly ICoreExceptionFactory _coreExceptionFactory;
 
-        public MexParser(IHttpManager httpManager, UserAuthType userAuthType, RequestContext requestContext)
+        public MexParser(
+            IHttpManager httpManager, 
+            ICoreExceptionFactory coreExceptionFactory, 
+            UserAuthType userAuthType, 
+            RequestContext requestContext)
         {
             _httpManager = httpManager;
+            _coreExceptionFactory = coreExceptionFactory;
             _userAuthType = userAuthType;
             _requestContext = requestContext;
         }
@@ -119,7 +125,7 @@ namespace Microsoft.Identity.Core.WsTrust
             var httpResponse = await _httpManager.SendGetAsync(uri.Uri, null, _requestContext).ConfigureAwait(false);
             if (httpResponse.StatusCode != System.Net.HttpStatusCode.OK)
             {
-                throw CoreExceptionFactory.Instance.GetServiceException(
+                throw _coreExceptionFactory.GetServiceException(
                     CoreErrorCodes.AccessingWsMetadataExchangeFailed,
                     string.Format(CultureInfo.CurrentCulture,
                         CoreErrorMessages.HttpRequestUnsuccessful,

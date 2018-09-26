@@ -44,6 +44,8 @@ namespace Microsoft.Identity.Client.Internal.Requests
     {
         static RequestBase()
         {
+            // TODO: why is platform specific bootstrapping static information
+            // here inside of RequestBase?  
             PlatformPlugin.PlatformInformation = new PlatformInformation();
         }
 
@@ -72,16 +74,19 @@ namespace Microsoft.Identity.Client.Internal.Requests
         protected IHttpManager HttpManager { get; }
         protected IAuthorityFactory AuthorityFactory { get; }
         protected IAadInstanceDiscovery AadInstanceDiscovery { get; }
+        protected ICoreExceptionFactory CoreExceptionFactory { get; }
 
         protected RequestBase(
             IHttpManager httpManager, 
             IAuthorityFactory authorityFactory, 
             IAadInstanceDiscovery aadInstanceDiscovery,
+            ICoreExceptionFactory coreExceptionFactory,
             AuthenticationRequestParameters authenticationRequestParameters)
         {
             HttpManager = httpManager;
             AuthorityFactory = authorityFactory;
             AadInstanceDiscovery = aadInstanceDiscovery;
+            CoreExceptionFactory = coreExceptionFactory;
 
             TokenCache = authenticationRequestParameters.TokenCache;
             // Log contains Pii 
@@ -186,14 +191,14 @@ namespace Microsoft.Identity.Client.Internal.Requests
                 catch (MsalException ex)
                 {
                     apiEvent.ApiErrorCode = ex.ErrorCode;
-                    string noPiiMsg = MsalExceptionFactory.GetPiiScrubbedExceptionDetails(ex);
+                    string noPiiMsg = CoreExceptionFactory.GetPiiScrubbedDetails(ex);
                     AuthenticationRequestParameters.RequestContext.Logger.Error(noPiiMsg);
                     AuthenticationRequestParameters.RequestContext.Logger.ErrorPii(ex);
                     throw;
                 }
                 catch (Exception ex)
                 {
-                    string noPiiMsg = MsalExceptionFactory.GetPiiScrubbedExceptionDetails(ex);
+                    string noPiiMsg = CoreExceptionFactory.GetPiiScrubbedDetails(ex);
                     AuthenticationRequestParameters.RequestContext.Logger.Error(noPiiMsg);
                     AuthenticationRequestParameters.RequestContext.Logger.ErrorPii(ex);
                     throw;
@@ -213,7 +218,7 @@ namespace Microsoft.Identity.Client.Internal.Requests
             if (!AuthenticationRequestParameters.IsClientCredentialRequest)
             {
                 //client_info is not returned from client credential flows because there is no user present.
-                fromServer = ClientInfo.CreateFromJson(Response.ClientInfo);
+                fromServer = ClientInfo.CreateFromJson(CoreExceptionFactory, Response.ClientInfo);
             }
 
             if (fromServer!= null && AuthenticationRequestParameters.ClientInfo != null)
@@ -235,7 +240,7 @@ namespace Microsoft.Identity.Client.Internal.Requests
                 }
             }
 
-            IdToken idToken = IdToken.Parse(Response.IdToken);
+            IdToken idToken = IdToken.Parse(CoreExceptionFactory, Response.IdToken);
 
             AuthenticationRequestParameters.TenantUpdatedCanonicalAuthority = Authority.UpdateTenantId(
                 AuthenticationRequestParameters.Authority.CanonicalAuthority, idToken?.TenantId);
@@ -299,7 +304,7 @@ namespace Microsoft.Identity.Client.Internal.Requests
 
         protected virtual async Task SendTokenRequestAsync()
         {
-            OAuth2Client client = new OAuth2Client(HttpManager);
+            OAuth2Client client = new OAuth2Client(HttpManager, CoreExceptionFactory);
             client.AddBodyParameter(OAuth2Parameter.ClientId, AuthenticationRequestParameters.ClientId);
             client.AddBodyParameter(OAuth2Parameter.ClientInfo, "1");
             foreach (var entry in AuthenticationRequestParameters.ToParameters())
