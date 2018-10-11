@@ -38,6 +38,9 @@ namespace Microsoft.Identity.Core.Instance
 
         internal B2CAuthority(CorePlatformInformationBase platformInformation, string authority, bool validateAuthority) : base(platformInformation, authority, validateAuthority)
         {
+            AuthorityType = AuthorityType.B2C;
+            ValidateAuthority = validateAuthority;
+
             Uri authorityUri = new Uri(authority);
             string[] pathSegments = authorityUri.AbsolutePath.Substring(1).Split(new [] { '/'}, StringSplitOptions.RemoveEmptyEntries);
             if (pathSegments.Length < 3)
@@ -47,8 +50,6 @@ namespace Microsoft.Identity.Core.Instance
 
             CanonicalAuthority = string.Format(CultureInfo.InvariantCulture, B2CCanonicalAuthorityTemplate, authorityUri.Authority,
                 pathSegments[0], pathSegments[1], pathSegments[2]);
-
-            AuthorityType = AuthorityType.B2C;
         }
 
         protected override async Task<string> GetOpenIdConfigurationEndpointAsync(string userPrincipalName, RequestContext requestContext)
