@@ -31,18 +31,14 @@ using Microsoft.Identity.Client;
 
 namespace DesktopTestApp
 {
-    class PublicClientHandler
+    public class PublicClientHandler
     {
         private string _component = "DesktopTestApp";
-
+        
         public PublicClientHandler(string clientId)
         {
             ApplicationId = clientId;
-            PublicClientApplication = new PublicClientApplication(ApplicationId)
-            {
-                UserTokenCache = TokenCacheHelper.GetUserCache(),
-                Component = _component
-            };
+            CreateOrUpdatePublicClientApp(InteractiveAuthority, ApplicationId);
         }
 
         public string ApplicationId { get; set; }
@@ -138,7 +134,8 @@ namespace DesktopTestApp
                 PublicClientApplication = new PublicClientApplication(applicationId)
                 {
                     UserTokenCache = TokenCacheHelper.GetUserCache(),
-                    Component = _component
+                    Component = _component,
+                    ValidateAuthority = false
                 };
             }
             else
@@ -147,7 +144,8 @@ namespace DesktopTestApp
                 PublicClientApplication = new PublicClientApplication(applicationId, interactiveAuthority)
                 {
                     UserTokenCache = TokenCacheHelper.GetUserCache(),
-                    Component = _component
+                    Component = _component,
+                    ValidateAuthority = false
                 };
             }
         }

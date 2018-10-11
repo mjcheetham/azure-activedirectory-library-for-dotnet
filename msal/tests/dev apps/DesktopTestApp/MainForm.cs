@@ -71,9 +71,11 @@ namespace DesktopTestApp
         }
 
 
-        private const string publicClientId = "0615b6ca-88d4-4884-8729-b178178f7c27";
+        private const string publicClientId = "2f226c8f-9066-4fb5-a602-4330a3d640dc"; // "0615b6ca-88d4-4884-8729-b178178f7c27"; "90c0fe63-bcf2-44d5-8fb7-b8bbc0b29dc6";
 
-        private readonly PublicClientHandler _publicClientHandler = new PublicClientHandler(publicClientId);
+
+
+        public readonly PublicClientHandler _publicClientHandler = new PublicClientHandler(publicClientId);
         private CancellationTokenSource _cancellationTokenSource;
 
         public MainForm()
@@ -182,6 +184,7 @@ namespace DesktopTestApp
 
                 try
                 {
+                    _publicClientHandler.PublicClientApplication.ValidateAuthority = false;
                     AuthenticationResult authenticationResult = await _publicClientHandler.AcquireTokenInteractiveAsync(
                         SplitScopeString(scopes.Text), 
                         GetUIBehavior(), 

@@ -50,6 +50,9 @@ namespace Microsoft.Identity.Core.Instance
 
             CanonicalAuthority = string.Format(CultureInfo.InvariantCulture, B2CCanonicalAuthorityTemplate, authorityUri.Authority,
                 pathSegments[0], pathSegments[1], pathSegments[2]);
+
+            //AuthorizationEndpoint = "https://login.microsoftonline.com/te/b2cblog.onmicrosoft.com/b2c_1_simple/oauth2/v2.0/authorize"; //"https://login.microsoftonline.com/common/oauth2/v2.0/authorize"; // authority.AuthorizationEndpoint;
+            //TokenEndpoint = "https://login.microsoftonline.com/te/b2cblog.onmicrosoft.com/b2c_1_simple/oauth2/v2.0/token";  // "https://login.microsoftonline.com/common/oauth2/v2.0/token"; // authority.TokenEndpoint;
         }
 
         protected override async Task<string> GetOpenIdConfigurationEndpointAsync(string userPrincipalName, RequestContext requestContext)

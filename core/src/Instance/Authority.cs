@@ -178,6 +178,22 @@ namespace Microsoft.Identity.Core.Instance
 
                 UserRealmUriPrefix = string.Format(CultureInfo.InvariantCulture, "https://{0}/common/userrealm/", this.Host);
 
+                //if (AuthorityType.B2C == GetAuthorityType(authorityUri.AbsolutePath))
+                //{
+                //    requestContext.Logger.Info("This is B2C...");
+                //    Authority authority = this; // this authority already exists
+                //    AuthorityType = authority.AuthorityType;
+                //    CanonicalAuthority = authority.CanonicalAuthority;
+                //    ValidateAuthority = authority.ValidateAuthority;
+                //    IsTenantless = authority.IsTenantless;
+                //    AuthorizationEndpoint = authority.Host + "/common/oauth2/v2.0/authorize"; //"https://login.microsoftonline.com/common/oauth2/v2.0/authorize"; // authority.AuthorizationEndpoint;
+                //    TokenEndpoint = authority.Host + "/common/oauth2/v2.0/token";  // "https://login.microsoftonline.com/common/oauth2/v2.0/token"; // authority.TokenEndpoint;
+                //    EndSessionEndpoint = authority.EndSessionEndpoint;
+                //    SelfSignedJwtAudience = authority.SelfSignedJwtAudience;
+
+                //    return;
+                //}
+
                 if (ExistsInValidatedAuthorityCache(userPrincipalName))
                 {
                     requestContext.Logger.Info("Authority found in validated authority cache");

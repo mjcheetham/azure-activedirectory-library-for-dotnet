@@ -58,6 +58,8 @@ namespace DesktopTestApp
             this.label11 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.publicClientTabPage = new System.Windows.Forms.TabPage();
+            this.cancelOperationButton = new System.Windows.Forms.Button();
+            this.acquireTokenDeviceCode = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.IgnoreUserCbx = new System.Windows.Forms.CheckBox();
             this.passwordLabel = new System.Windows.Forms.Label();
@@ -87,8 +89,6 @@ namespace DesktopTestApp
             this.label4 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.acquireTokenDeviceCode = new System.Windows.Forms.Button();
-            this.cancelOperationButton = new System.Windows.Forms.Button();
             this.logsTabPage.SuspendLayout();
             this.cacheTabPage.SuspendLayout();
             this.settingsTabPage.SuspendLayout();
@@ -427,6 +427,26 @@ namespace DesktopTestApp
             this.publicClientTabPage.TabIndex = 0;
             this.publicClientTabPage.Text = "publicClientTabPage";
             // 
+            // cancelOperationButton
+            // 
+            this.cancelOperationButton.Location = new System.Drawing.Point(498, 724);
+            this.cancelOperationButton.Name = "cancelOperationButton";
+            this.cancelOperationButton.Size = new System.Drawing.Size(164, 29);
+            this.cancelOperationButton.TabIndex = 39;
+            this.cancelOperationButton.Text = "Cancel Operation";
+            this.cancelOperationButton.UseVisualStyleBackColor = true;
+            this.cancelOperationButton.Click += new System.EventHandler(this.cancelOperationButton_Click);
+            // 
+            // acquireTokenDeviceCode
+            // 
+            this.acquireTokenDeviceCode.Location = new System.Drawing.Point(496, 582);
+            this.acquireTokenDeviceCode.Name = "acquireTokenDeviceCode";
+            this.acquireTokenDeviceCode.Size = new System.Drawing.Size(164, 29);
+            this.acquireTokenDeviceCode.TabIndex = 38;
+            this.acquireTokenDeviceCode.Text = "Acquire Token By DeviceCode";
+            this.acquireTokenDeviceCode.UseVisualStyleBackColor = true;
+            this.acquireTokenDeviceCode.Click += new System.EventHandler(this.acquireTokenDeviceCode_Click);
+            // 
             // progressBar1
             // 
             this.progressBar1.Location = new System.Drawing.Point(15, 759);
@@ -505,7 +525,7 @@ namespace DesktopTestApp
             this.authority.Name = "authority";
             this.authority.Size = new System.Drawing.Size(352, 20);
             this.authority.TabIndex = 16;
-            this.authority.Text = "https://login.microsoftonline.com/common";
+            this.authority.Text = "https://b2cblog.b2clogin.com/tfp/B2CBlog.onmicrosoft.com/B2C_1_Simple";  //"https://login.microsoftonline.com/tfp/fabrikamb2c.onmicrosoft.com/b2c_1_susi/";
             this.authority.Leave += new System.EventHandler(this.authority_FocusLeave);
             // 
             // scopes
@@ -709,26 +729,6 @@ namespace DesktopTestApp
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(676, 814);
             this.tabControl1.TabIndex = 0;
-            // 
-            // acquireTokenDeviceCode
-            // 
-            this.acquireTokenDeviceCode.Location = new System.Drawing.Point(496, 582);
-            this.acquireTokenDeviceCode.Name = "acquireTokenDeviceCode";
-            this.acquireTokenDeviceCode.Size = new System.Drawing.Size(164, 29);
-            this.acquireTokenDeviceCode.TabIndex = 38;
-            this.acquireTokenDeviceCode.Text = "Acquire Token By DeviceCode";
-            this.acquireTokenDeviceCode.UseVisualStyleBackColor = true;
-            this.acquireTokenDeviceCode.Click += new System.EventHandler(this.acquireTokenDeviceCode_Click);
-            // 
-            // cancelOperationButton
-            // 
-            this.cancelOperationButton.Location = new System.Drawing.Point(498, 724);
-            this.cancelOperationButton.Name = "cancelOperationButton";
-            this.cancelOperationButton.Size = new System.Drawing.Size(164, 29);
-            this.cancelOperationButton.TabIndex = 39;
-            this.cancelOperationButton.Text = "Cancel Operation";
-            this.cancelOperationButton.UseVisualStyleBackColor = true;
-            this.cancelOperationButton.Click += new System.EventHandler(this.cancelOperationButton_Click);
             // 
             // MainForm
             // 
