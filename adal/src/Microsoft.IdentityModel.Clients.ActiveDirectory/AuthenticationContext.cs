@@ -186,6 +186,13 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
         }
 #endif
 
+#if NETSTANDARD
+        public void SetWebUIFactory(Identity.Core.UI.Custom.ICustomWebUIFactory factory)
+        {
+            WebUIFactoryProvider.WebUIFactory = new Identity.Core.UI.Custom.CustomWebUIFactoryAdapter(factory);
+        }
+#endif
+
         /// <summary>
         /// Acquires device code from the authority.
         /// </summary>
