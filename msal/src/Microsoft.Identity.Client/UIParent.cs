@@ -33,7 +33,9 @@ using Android.App;
 using Android.Content;
 using Android.Content.PM;
 #endif
-
+#if MAC
+using AppKit;
+#endif
 using Microsoft.Identity.Client.Internal;
 using Microsoft.Identity.Core.UI;
 
@@ -183,6 +185,17 @@ namespace Microsoft.Identity.Client
             CoreUIParent = new CoreUIParent(ownerWindow);
         }
 #endif
+#endif
+
+#if MAC
+        /// <summary>
+        /// Initializes an instance for a provided caller window.
+        /// </summary>
+        /// <param name="callerWindow">Caller window. OPTIONAL.</param>
+        public UIParent(NSWindow callerWindow)
+        {
+            CoreUIParent = new CoreUIParent(callerWindow);
+        }
 #endif
     }
 }

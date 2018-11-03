@@ -32,6 +32,9 @@ using Android.App;
 #if iOS
 using UIKit;
 #endif
+#if MAC
+using AppKit;
+#endif
 
 namespace Microsoft.Identity.Core.UI
 {
@@ -40,6 +43,22 @@ namespace Microsoft.Identity.Core.UI
         public CoreUIParent()
         {
         }
+
+#if MAC
+        /// <summary>
+        /// Initializes an instance for a provided caller window.
+        /// </summary>
+        /// <param name="callerWindow">Caller window. OPTIONAL.</param>
+        public CoreUIParent(NSWindow callerWindow)
+        {
+            CallerWindow = callerWindow;
+        }
+
+        /// <summary>
+        /// Caller NSWindow
+        /// </summary>
+        public NSWindow CallerWindow { get; set; }
+#endif
 
 #if ANDROID || iOS
         internal bool UseEmbeddedWebview { get; set; }

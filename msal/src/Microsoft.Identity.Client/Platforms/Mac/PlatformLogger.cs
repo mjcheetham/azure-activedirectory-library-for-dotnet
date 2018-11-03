@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//----------------------------------------------------------------------
 //
 // Copyright (c) Microsoft Corporation.
 // All rights reserved.
@@ -25,31 +25,30 @@
 //
 //------------------------------------------------------------------------------
 
-using Microsoft.Identity.Core.UI;
+using System;
 
 namespace Microsoft.Identity.Client.Internal
 {
-    internal static class PlatformPlugin
+    internal class PlatformLogger
     {
-        public static IWebUIFactory GetWebUiFactory()
+        public static void Error(string message)
         {
-            if (_overloadWebUiFactory != null)
-            {
-                return _overloadWebUiFactory;
-            }
-
-#if ANDROID || iOS || MAC
-            return new Microsoft.Identity.Core.UI.WebUIFactory();
-#else
-            return new UI.WebUIFactory();
-#endif
+            Console.WriteLine(message); //Console.writeline writes to NSLog by default
         }
 
-        private static IWebUIFactory _overloadWebUiFactory = null;
-        
-        public static void SetWebUiFactory(IWebUIFactory webUiFactory)
+        public static void Warning(string message)
         {
-            _overloadWebUiFactory = webUiFactory;
+            Console.WriteLine(message); //Console.writeline writes to NSLog by default
+        }
+
+        public static void Verbose(string message)
+        {
+            Console.WriteLine(message); //Console.writeline writes to NSLog by default
+        }
+
+        public static void Information(string message)
+        {
+            Console.WriteLine(message); //Console.writeline writes to NSLog by default
         }
     }
 }

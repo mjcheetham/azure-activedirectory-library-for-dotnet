@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 //
 // Copyright (c) Microsoft Corporation.
 // All rights reserved.
@@ -25,31 +25,24 @@
 //
 //------------------------------------------------------------------------------
 
-using Microsoft.Identity.Core.UI;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.Identity.Core;
+using Microsoft.Identity.Core.Cache;
 
-namespace Microsoft.Identity.Client.Internal
+namespace Microsoft.IdentityModel.Clients.ActiveDirectory
 {
-    internal static class PlatformPlugin
+    internal class BrokerHelper
     {
-        public static IWebUIFactory GetWebUiFactory()
-        {
-            if (_overloadWebUiFactory != null)
-            {
-                return _overloadWebUiFactory;
-            }
+        public RequestContext RequestContext { get; set; }
+        public IPlatformParameters PlatformParameters { get; set; }
 
-#if ANDROID || iOS || MAC
-            return new Microsoft.Identity.Core.UI.WebUIFactory();
-#else
-            return new UI.WebUIFactory();
-#endif
-        }
+        public bool CanInvokeBroker { get { return false; } }
 
-        private static IWebUIFactory _overloadWebUiFactory = null;
-        
-        public static void SetWebUiFactory(IWebUIFactory webUiFactory)
+        public Task<AdalResultWrapper> AcquireTokenUsingBrokerAsync(IDictionary<string, string> brokerPayload)
         {
-            _overloadWebUiFactory = webUiFactory;
+            throw new NotImplementedException();
         }
     }
 }

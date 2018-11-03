@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//----------------------------------------------------------------------
 //
 // Copyright (c) Microsoft Corporation.
 // All rights reserved.
@@ -25,31 +25,19 @@
 //
 //------------------------------------------------------------------------------
 
-using Microsoft.Identity.Core.UI;
+using System;
 
-namespace Microsoft.Identity.Client.Internal
+namespace Microsoft.Identity.Core.UI
 {
-    internal static class PlatformPlugin
+    internal class WebUIFactory : IWebUIFactory
     {
-        public static IWebUIFactory GetWebUiFactory()
+        public IWebUI CreateAuthenticationDialog(CoreUIParent coreUIParent, RequestContext requestContext)
         {
-            if (_overloadWebUiFactory != null)
+            return new WebUI()
             {
-                return _overloadWebUiFactory;
-            }
-
-#if ANDROID || iOS || MAC
-            return new Microsoft.Identity.Core.UI.WebUIFactory();
-#else
-            return new UI.WebUIFactory();
-#endif
-        }
-
-        private static IWebUIFactory _overloadWebUiFactory = null;
-        
-        public static void SetWebUiFactory(IWebUIFactory webUiFactory)
-        {
-            _overloadWebUiFactory = webUiFactory;
+                CoreUIParent = coreUIParent,
+                RequestContext = requestContext
+            };
         }
     }
 }

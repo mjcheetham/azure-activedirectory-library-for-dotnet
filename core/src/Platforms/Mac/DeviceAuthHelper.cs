@@ -25,31 +25,19 @@
 //
 //------------------------------------------------------------------------------
 
-using Microsoft.Identity.Core.UI;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Threading.Tasks;
 
-namespace Microsoft.Identity.Client.Internal
+namespace Microsoft.Identity.Core.UI
 {
-    internal static class PlatformPlugin
+    internal class DeviceAuthHelper
     {
-        public static IWebUIFactory GetWebUiFactory()
-        {
-            if (_overloadWebUiFactory != null)
-            {
-                return _overloadWebUiFactory;
-            }
+        public static bool CanHandleDeviceAuthChallenge { get { return false; } }
 
-#if ANDROID || iOS || MAC
-            return new Microsoft.Identity.Core.UI.WebUIFactory();
-#else
-            return new UI.WebUIFactory();
-#endif
-        }
-
-        private static IWebUIFactory _overloadWebUiFactory = null;
-        
-        public static void SetWebUiFactory(IWebUIFactory webUiFactory)
+        public static Task<string> CreateDeviceAuthChallengeResponseAsync(IDictionary<string, string> challengeData)
         {
-            _overloadWebUiFactory = webUiFactory;
+            return Task.FromResult(string.Format(CultureInfo.InvariantCulture, @"PKeyAuth Context=""{0}"",Version=""{1}""", challengeData[BrokerConstants.ChallengeResponseContext], challengeData[BrokerConstants.ChallengeResponseVersion]));
         }
     }
 }

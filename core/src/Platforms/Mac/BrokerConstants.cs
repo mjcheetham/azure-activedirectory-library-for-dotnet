@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//----------------------------------------------------------------------
 //
 // Copyright (c) Microsoft Corporation.
 // All rights reserved.
@@ -25,31 +25,27 @@
 //
 //------------------------------------------------------------------------------
 
-using Microsoft.Identity.Core.UI;
 
-namespace Microsoft.Identity.Client.Internal
+namespace Microsoft.Identity.Core.UI
 {
-    internal static class PlatformPlugin
+    internal static class BrokerConstants
     {
-        public static IWebUIFactory GetWebUiFactory()
-        {
-            if (_overloadWebUiFactory != null)
-            {
-                return _overloadWebUiFactory;
-            }
+        public const string ChallengeResponseHeader = "Authorization";
 
-#if ANDROID || iOS || MAC
-            return new Microsoft.Identity.Core.UI.WebUIFactory();
-#else
-            return new UI.WebUIFactory();
-#endif
-        }
+        public const string ChallengeResponseType = "PKeyAuth";
 
-        private static IWebUIFactory _overloadWebUiFactory = null;
-        
-        public static void SetWebUiFactory(IWebUIFactory webUiFactory)
-        {
-            _overloadWebUiFactory = webUiFactory;
-        }
+        public const string ChallengeResponseToken = "AuthToken";
+
+        public const string ChallengeResponseContext = "Context";
+
+        public const string ChallengeResponseVersion = "Version";
+
+        public const string BrowserExtPrefix = "browser://";
+
+        public const string BrowserExtInstallPrefix = "msauth://";
+
+        public const string DeviceAuthChallengeRedirect = "urn:http-auth:PKeyAuth";
+        public const string ChallengeHeaderKey = "x-ms-PKeyAuth";
+        public const string ChallengeHeaderValue = "1.0";
     }
 }

@@ -43,6 +43,8 @@ namespace Microsoft.Identity.Core
             new AndroidPlatformProxy(IsMsal())
 #elif iOS
             new iOSPlatformProxy(IsMsal())
+#elif MAC
+            new MacPlatformProxy(IsMsal())
 #elif WINDOWS_APP
             new UapPlatformProxy(IsMsal())
 #elif FACADE

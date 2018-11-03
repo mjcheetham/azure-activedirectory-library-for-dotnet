@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//----------------------------------------------------------------------
 //
 // Copyright (c) Microsoft Corporation.
 // All rights reserved.
@@ -25,31 +25,20 @@
 //
 //------------------------------------------------------------------------------
 
-using Microsoft.Identity.Core.UI;
+using System;
 
-namespace Microsoft.Identity.Client.Internal
+namespace Microsoft.IdentityModel.Clients.ActiveDirectory.Internal.Platform
 {
-    internal static class PlatformPlugin
+    internal class AdalLogger : AdalLoggerBase
     {
-        public static IWebUIFactory GetWebUiFactory()
+        public AdalLogger(Guid correlationId) : base(correlationId)
         {
-            if (_overloadWebUiFactory != null)
-            {
-                return _overloadWebUiFactory;
-            }
-
-#if ANDROID || iOS || MAC
-            return new Microsoft.Identity.Core.UI.WebUIFactory();
-#else
-            return new UI.WebUIFactory();
-#endif
         }
 
-        private static IWebUIFactory _overloadWebUiFactory = null;
-        
-        public static void SetWebUiFactory(IWebUIFactory webUiFactory)
+        internal override void DefaultLog(LogLevel logLevel, string message)
         {
-            _overloadWebUiFactory = webUiFactory;
+            Console.WriteLine(message); //Console.writeline writes to NSLog by default
         }
     }
 }
+
