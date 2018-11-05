@@ -90,7 +90,7 @@ namespace Microsoft.Identity.Core.UI
             {
                 using (var pool = new NSAutoreleasePool())
                 {
-                    var nextEvent = NSApplication.SharedApplication.NextEvent(NSEventMask.AnyEvent, NSDate.DistantFuture, NSRunLoop.NSDefaultRunLoopMode, true);
+                    var nextEvent = NSApplication.SharedApplication.NextEvent(NSEventMask.AnyEvent, NSDate.DistantFuture, NSRunLoopMode.Default, true);
 
                     //discard events that are for other windows, else they remain somewhat interactive
                     if (nextEvent.Window != null && nextEvent.Window != window)
@@ -133,7 +133,7 @@ namespace Microsoft.Identity.Core.UI
 
             var window = new NSWindow(centerRect, NSWindowStyle.Titled | NSWindowStyle.Closable | NSWindowStyle.Resizable, NSBackingStore.Buffered, true)
             {
-                BackgroundColor = NSColor.Red,
+                BackgroundColor = NSColor.WindowBackground,
                 WeakDelegate = this,
                 AccessibilityIdentifier = "ADAL_SIGN_IN_WINDOW"
             };

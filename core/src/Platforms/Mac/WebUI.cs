@@ -25,6 +25,7 @@
 //
 // ------------------------------------------------------------------------------
 
+using Foundation;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,8 +34,10 @@ namespace Microsoft.Identity.Core.UI
 {
     internal class WebUI : IWebUI
     {
-        private static SemaphoreSlim returnedUriReady;
-        private static AuthorizationResult authorizationResult;
+        private readonly NSObject invoker = new NSObject();
+
+        private SemaphoreSlim returnedUriReady;
+        private AuthorizationResult authorizationResult;
 
         public CoreUIParent CoreUIParent { get; set; }
         public RequestContext RequestContext { get; set; }
@@ -42,13 +45,14 @@ namespace Microsoft.Identity.Core.UI
         public async Task<AuthorizationResult> AcquireAuthorizationAsync(Uri authorizationUri, Uri redirectUri, RequestContext requestContext)
         {
             returnedUriReady = new SemaphoreSlim(0);
-            Authenticate(authorizationUri, redirectUri, requestContext);
-            await returnedUriReady.WaitAsync().ConfigureAwait(false);
+
+            invoker.BeginInvokeOnMainThread(() => Authenticate(authorizationUri, redirectUri, requestContext));
+            await returnedUriReady.WaitAsync().ConfigureAwait(true);
 
             return authorizationResult;
         }
 
-        public static void SetAuthorizationResult(AuthorizationResult authorizationResultInput)
+        public void SetAuthorizationResult(AuthorizationResult authorizationResultInput)
         {
             authorizationResult = authorizationResultInput;
             returnedUriReady.Release();
@@ -58,7 +62,7 @@ namespace Microsoft.Identity.Core.UI
         {
             try
             {
-                var windowController = new AuthenticationAgentNSWindowController(authorizationUri.AbsoluteUri, redirectUri.OriginalString, CallbackMethod);
+                var windowController = new AuthenticationAgentNSWindowController(authorizationUri.AbsoluteUri, redirectUri.OriginalString, SetAuthorizationResult);
                 windowController.Run(CoreUIParent.CallerWindow);
             }
             catch (Exception ex)
@@ -68,11 +72,6 @@ namespace Microsoft.Identity.Core.UI
                     "See inner exception for details",
                     ex);
             }
-        }
-
-        private void CallbackMethod(AuthorizationResult result)
-        {
-            SetAuthorizationResult(result);
         }
     }
 }
