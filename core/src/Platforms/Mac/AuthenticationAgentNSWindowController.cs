@@ -40,22 +40,20 @@ namespace Microsoft.Identity.Core.UI
     class AuthenticationAgentNSWindowController
         : NSWindowController, IWebPolicyDelegate, IWebFrameLoadDelegate, INSWindowDelegate
     {
-        const int DEFAULT_WINDOW_WIDTH = 420;
-        const int DEFAULT_WINDOW_HEIGHT = 650;
+        private const int DEFAULT_WINDOW_WIDTH = 420;
+        private const int DEFAULT_WINDOW_HEIGHT = 650;
 
-        WebView webView;
-        NSProgressIndicator progressIndicator;
+        private WebView webView;
+        private NSProgressIndicator progressIndicator;
+        private NSWindow callerWindow;
 
-        NSWindow callerWindow;
+        private readonly string url;
+        private readonly string callback;
+        private readonly ResultCallback callbackMethod;
 
-        readonly string url;
-        readonly string callback;
+        public delegate void ResultCallback(AuthorizationResult result);
 
-        readonly ReturnCodeCallback callbackMethod;
-
-        public delegate void ReturnCodeCallback(AuthorizationResult result);
-
-        public AuthenticationAgentNSWindowController(string url, string callback, ReturnCodeCallback callbackMethod)
+        public AuthenticationAgentNSWindowController(string url, string callback, ResultCallback callbackMethod)
             : base ("PlaceholderNibNameToForceWindowLoad")
         {
             this.url = url;
@@ -79,7 +77,7 @@ namespace Microsoft.Identity.Core.UI
             RunModal();
         }
 
-        //webview only works on main runloop, not nested, so set up manual modal runloop
+        // WebView only works on main runloop, not nested, so set up manual modal runloop
         void RunModal()
         {
             var window = Window;
@@ -134,7 +132,7 @@ namespace Microsoft.Identity.Core.UI
             var window = new NSWindow(centerRect, NSWindowStyle.Titled | NSWindowStyle.Closable, NSBackingStore.Buffered, true)
             {
                 BackgroundColor = NSColor.WindowBackground,
-                WeakDelegate = this,
+                Delegate = this,
                 AccessibilityIdentifier = "SIGN_IN_WINDOW"
             };
 
@@ -151,22 +149,22 @@ namespace Microsoft.Identity.Core.UI
 
             contentView.AddSubview(webView);
 
+            // On macOS there's a noticeable lag between the window showing and the page loading, so starting with the spinner
+            // at least make it looks like something is happening.
             progressIndicator = new NSProgressIndicator(new CGRect(DEFAULT_WINDOW_WIDTH / 2 - 16, DEFAULT_WINDOW_HEIGHT / 2 - 16, 32, 32))
             {
+                Hidden = false,
                 Style = NSProgressIndicatorStyle.Spinning,
-                // Keep the item centered in the window even if it's resized.
+                // Keep the item centered in the window even if it's resized
                 AutoresizingMask = NSViewResizingMask.MinXMargin | NSViewResizingMask.MaxXMargin | NSViewResizingMask.MinYMargin | NSViewResizingMask.MaxYMargin
             };
-
-            // On OS X there's a noticable lag between the window showing and the page loading, so starting with the spinner
-            // at least make it looks like something is happening.
-            progressIndicator.Hidden = false;
             progressIndicator.StartAnimation(null);
 
             contentView.AddSubview(progressIndicator);
 
             Window = window;
 
+            // Navigate the web view to the initial URL
             webView.MainFrameUrl = url;
         }
 

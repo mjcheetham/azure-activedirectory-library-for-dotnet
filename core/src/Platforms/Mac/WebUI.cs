@@ -67,7 +67,7 @@ namespace Microsoft.Identity.Core.UI
                 // or else they will cause a deadlock.
                 // For example calling `AcquireTokenAsync(...).Result` from the main thread
                 // would result in this delegate never executing.
-                NSRunLoop.Main.BeginInvokeOnMainThread(() =>
+                NSApplication.SharedApplication.BeginInvokeOnMainThread(() =>
                 {
                     var windowController = new AuthenticationAgentNSWindowController(authorizationUri.AbsoluteUri, redirectUri.OriginalString, SetAuthorizationResult);
                     windowController.Run(CoreUIParent.CallerWindow);
