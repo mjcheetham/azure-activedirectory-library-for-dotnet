@@ -33,7 +33,7 @@ namespace Microsoft.Identity.Core.UI
     {
         public IWebUI CreateAuthenticationDialog(CoreUIParent coreUIParent, RequestContext requestContext)
         {
-            return new WebUI()
+            return new WebUI
             {
                 CoreUIParent = coreUIParent,
                 RequestContext = requestContext

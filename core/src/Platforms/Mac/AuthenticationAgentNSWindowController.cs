@@ -131,11 +131,11 @@ namespace Microsoft.Identity.Core.UI
             // Calculate the center of the current main window so we can position our window in the center of it
             CGRect centerRect = CenterRect(windowRect, new CGRect(0, 0, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT));
 
-            var window = new NSWindow(centerRect, NSWindowStyle.Titled | NSWindowStyle.Closable | NSWindowStyle.Resizable, NSBackingStore.Buffered, true)
+            var window = new NSWindow(centerRect, NSWindowStyle.Titled | NSWindowStyle.Closable, NSBackingStore.Buffered, true)
             {
                 BackgroundColor = NSColor.WindowBackground,
                 WeakDelegate = this,
-                AccessibilityIdentifier = "ADAL_SIGN_IN_WINDOW"
+                AccessibilityIdentifier = "SIGN_IN_WINDOW"
             };
 
             var contentView = window.ContentView;
@@ -146,7 +146,7 @@ namespace Microsoft.Identity.Core.UI
                 FrameLoadDelegate = this,
                 PolicyDelegate = this,
                 AutoresizingMask = NSViewResizingMask.HeightSizable | NSViewResizingMask.WidthSizable,
-                AccessibilityIdentifier = "ADAL_SIGN_IN_WEBVIEW"
+                AccessibilityIdentifier = "SIGN_IN_WEBVIEW"
             };
 
             contentView.AddSubview(webView);

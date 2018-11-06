@@ -25,6 +25,7 @@
 //
 // ------------------------------------------------------------------------------
 
+using AppKit;
 using Foundation;
 using System;
 using System.Threading;
@@ -34,8 +35,6 @@ namespace Microsoft.Identity.Core.UI
 {
     internal class WebUI : IWebUI
     {
-        private readonly NSObject invoker = new NSObject();
-
         private SemaphoreSlim returnedUriReady;
         private AuthorizationResult authorizationResult;
 
@@ -46,8 +45,9 @@ namespace Microsoft.Identity.Core.UI
         {
             returnedUriReady = new SemaphoreSlim(0);
 
-            invoker.BeginInvokeOnMainThread(() => Authenticate(authorizationUri, redirectUri, requestContext));
-            await returnedUriReady.WaitAsync().ConfigureAwait(true);
+            Authenticate(authorizationUri, redirectUri, requestContext);
+
+            await returnedUriReady.WaitAsync().ConfigureAwait(false);
 
             return authorizationResult;
         }
@@ -62,8 +62,16 @@ namespace Microsoft.Identity.Core.UI
         {
             try
             {
-                var windowController = new AuthenticationAgentNSWindowController(authorizationUri.AbsoluteUri, redirectUri.OriginalString, SetAuthorizationResult);
-                windowController.Run(CoreUIParent.CallerWindow);
+                // Ensure we create the NSViewController on the main thread.
+                // Consumers of our library must ensure they do not block the main thread
+                // or else they will cause a deadlock.
+                // For example calling `AcquireTokenAsync(...).Result` from the main thread
+                // would result in this delegate never executing.
+                NSRunLoop.Main.BeginInvokeOnMainThread(() =>
+                {
+                    var windowController = new AuthenticationAgentNSWindowController(authorizationUri.AbsoluteUri, redirectUri.OriginalString, SetAuthorizationResult);
+                    windowController.Run(CoreUIParent.CallerWindow);
+                });
             }
             catch (Exception ex)
             {

@@ -45,26 +45,26 @@ namespace Microsoft.IdentityModel.Clients.ActiveDirectory
         /// <summary>
         /// Additional parameters used in acquiring user's authorization
         /// </summary>
-        /// <param name="callerWindow">NSWindow instance</param>
-        public PlatformParameters(NSWindow callerWindow)
+        /// <param name="promptBehavior">Prompt behavior enum to control UI</param>
+        public PlatformParameters(PromptBehavior promptBehavior) : this(promptBehavior, null)
         {
-            CallerWindow = callerWindow;
         }
 
         /// <summary>
         /// Additional parameters used in acquiring user's authorization
         /// </summary>
-        /// <param name="callerWindow">NSWindow instance</param>
         /// <param name="promptBehavior">Prompt behavior enum to control UI</param>
-        public PlatformParameters(NSWindow callerWindow, PromptBehavior promptBehavior) : this(callerWindow)
+        /// <param name="callerWindow">NSWindow instance</param>
+        public PlatformParameters(PromptBehavior promptBehavior, NSWindow callerWindow)
         {
             PromptBehavior = promptBehavior;
+            CallerWindow = callerWindow;
         }
 
         /// <summary>
         /// Caller NSWindow
         /// </summary>
-        public NSWindow CallerWindow { get; private set; }
+        public NSWindow CallerWindow { get; set; }
 
         internal CoreUIParent GetCoreUIParent()
         {
