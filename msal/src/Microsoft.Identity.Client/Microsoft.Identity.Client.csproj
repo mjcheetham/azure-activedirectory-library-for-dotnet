@@ -1,7 +1,7 @@
 ﻿<Project Sdk="MSBuild.Sdk.Extras/1.5.4">
 
   <PropertyGroup>
-    <TargetFrameworks>net45;netstandard1.3;uap10.0;MonoAndroid8.1;Xamarin.iOS10;netcoreapp1.0;xamarinmac20</TargetFrameworks>
+    <TargetFrameworks>netstandard1.3;netcoreapp1.0;xamarinmac20</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>../../../build/MSAL.snk</AssemblyOriginatorKeyFile>
@@ -184,7 +184,7 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Xamarin.Mac" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'MonoAndroid8.1' ">
+  <!-- <ItemGroup Condition=" '$(TargetFramework)' == 'MonoAndroid8.1' ">
     <Compile Include="Platforms\Android\**\*.cs" />
     <Compile Include="..\..\..\core\src\Platforms\Android\**\*.cs" LinkBase="Core\Platforms\" />
     <Compile Include="Features\DeviceCode\**\*.cs" />
@@ -197,7 +197,7 @@
     <Reference Include="System.Xml" />
     <PackageReference Include="Xamarin.Android.Support.CustomTabs" Version="27.0.2" />
     <PackageReference Include="Xamarin.Android.Support.v7.AppCompat" Version="27.0.2" />
-  </ItemGroup>
+  </ItemGroup> -->
 
   <!-- This is here to workaround designer issues so VS sees them appropriately -->
   <ItemGroup>
